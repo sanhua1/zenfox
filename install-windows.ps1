@@ -282,6 +282,15 @@ try {
     if ($userJsContent -notmatch 'user_pref\("userChromeJS\.enabled",\s*true\);') {
         Add-Content -LiteralPath $userJs -Value 'user_pref("userChromeJS.enabled", true);'
     }
+    if ($userJsContent -notmatch 'user_pref\("sidebar\.revamp",\s*false\);') {
+        Add-Content -LiteralPath $userJs -Value 'user_pref("sidebar.revamp", false);'
+    }
+    if ($userJsContent -notmatch 'user_pref\("sidebar\.verticalTabs",\s*false\);') {
+        Add-Content -LiteralPath $userJs -Value 'user_pref("sidebar.verticalTabs", false);'
+    }
+    if ($userJsContent -notmatch 'user_pref\("sidebar\.visibility",\s*"hide-sidebar"\);') {
+        Add-Content -LiteralPath $userJs -Value 'user_pref("sidebar.visibility", "hide-sidebar");'
+    }
 
     $cache = Join-Path $env:LOCALAPPDATA ("Mozilla\Firefox\Profiles\" + (Split-Path $profile -Leaf) + '\startupCache')
     if (Test-Path $cache) { Move-Item $cache ($cache + ".pre-zenfox-$stamp") }

@@ -56,6 +56,8 @@ Native/tarball Firefox installations are supported. Snap and Flatpak Firefox are
 
 The installer can detect Sidebery but cannot modify Sidebery's private extension settings. Its optional companion CSS must be pasted into Sidebery's Styles editor manually.
 
+On browser launch, Zenfox disables Firefox's separate native sidebar launcher and selects Sidebery as the active sidebar. This prevents new Firefox profiles from showing both the native launcher and the Sidebery panel.
+
 ## Detection only
 
 From a cloned repository, check prerequisites without writing files:

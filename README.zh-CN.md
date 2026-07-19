@@ -60,6 +60,8 @@ Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Fla
 
 安装脚本可以检测 Sidebery，但不能修改 Sidebery 扩展内部的私有设置。可选的配套 CSS 需要手动粘贴到 Sidebery 的样式编辑器中。
 
+浏览器启动时，Zenfox 会关闭 Firefox 独立的原生侧边栏启动器，并将 Sidebery 选为当前侧边栏，避免新的 Firefox Profile 同时显示原生启动器和 Sidebery 面板。
+
 ## 仅检测环境
 
 从克隆到本地的仓库中，可以只检查前提条件，不写入任何文件：

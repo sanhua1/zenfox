@@ -1,7 +1,7 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.21
+   PLAN.md · 样式 v0.5.22
    重点：原生 urlbar 进第二行；JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
    ========================================================================== */
@@ -596,8 +596,7 @@
 }
 
 /* ========== 侧栏：顶让位 = chrome 实测高度，无额外空隙 ========== */
-:root:not([customizing]) #sidebar-box,
-:root:not([customizing]) #sidebar-main {
+:root:not([customizing]) #sidebar-box {
   /*
    * 不覆盖 width/min-width/max-width：交给 Firefox 原生 splitter 调整。
    * JS 用 ResizeObserver 只读实际宽度，再单向同步给上方 chrome。
@@ -606,6 +605,24 @@
   padding-top: calc(var(--uc-chrome-height) + var(--uc-sidebar-gap, 4px)) !important;
   box-sizing: border-box !important;
   background: var(--uc-chrome-bg) !important;
+}
+
+/*
+ * Firefox 152 enables the revamped native sidebar launcher on new profiles.
+ * Zenfox uses the real #sidebar-box for Sidebery, so the separate launcher and
+ * its splitter are redundant and must not consume a second vertical strip.
+ */
+:root:not([customizing]) #sidebar-main,
+:root:not([customizing]) #sidebar-launcher-splitter {
+  display: none !important;
+  visibility: collapse !important;
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
 }
 
 #sidebar-header {

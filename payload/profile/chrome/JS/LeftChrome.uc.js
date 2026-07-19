@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.19 — native urlbar + resizable synced sidebar
-// @version         0.5.19
+// @description     PLAN.md v0.5.22 — native urlbar + resizable synced sidebar
+// @version         0.5.22
 // @author          local
 // ==/UserScript==
 
@@ -42,6 +42,8 @@
  *   v0.5.18 makes row3 extension-only and excludes #smartwindow-ask-button.
  *   v0.5.19 maps the custom chrome background/foreground/border to Firefox's
  *            active theme variables while retaining dark fallbacks.
+ *   v0.5.22 opens Sidebery on clean profiles after its sidebar command is
+ *            registered, without adding a persistent observer or polling loop.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -53,6 +55,7 @@
 
   const root = doc.documentElement;
   const $ = (id) => doc.getElementById(id);
+  const SIDEBERY_ID = "{3c078156-979c-498b-8990-85f7987dd929}";
 
   const CFG = {
     defaultWidth: 307,
@@ -103,7 +106,7 @@
   }
 
   function measureSidebar() {
-    for (const id of ["sidebar-box", "sidebar-main"]) {
+    for (const id of ["sidebar-box"]) {
       const box = $(id);
       if (!box) continue;
       const r = box.getBoundingClientRect();
@@ -866,7 +869,7 @@
   }
 
   function watchSidebar() {
-    for (const id of ["sidebar-box", "sidebar-main"]) {
+    for (const id of ["sidebar-box"]) {
       const node = $(id);
       if (!node || node.__ucRO) continue;
       try {
@@ -877,6 +880,41 @@
         ro.observe(node);
         node.__ucRO = ro;
       } catch (_) {}
+    }
+  }
+
+  /**
+   * A newly-created Firefox profile knows that Sidebery is installed, but it
+   * does not necessarily select its sidebar action. Wait briefly for the
+   * WebExtension to register, then open its native sidebar command once.
+   */
+  function ensureSideberySidebar(attempt = 0) {
+    try {
+      const controller = win.SidebarController;
+      const extension = controller
+        ?.getExtensions?.()
+        ?.find((item) => item?.extensionId === SIDEBERY_ID);
+
+      if (extension?.commandID) {
+        if (!controller.isOpen || controller.currentID !== extension.commandID) {
+          Promise.resolve(controller.show(extension.commandID))
+            .then(() => {
+              syncWidth();
+              measureChromeHeight();
+            })
+            .catch((error) => log("open Sidebery", error));
+        } else {
+          syncWidth();
+        }
+        return;
+      }
+    } catch (error) {
+      log("find Sidebery", error);
+    }
+
+    // Finite startup retry only: 40 × 250ms = at most 10 seconds.
+    if (attempt < 39) {
+      win.setTimeout(() => ensureSideberySidebar(attempt + 1), 250);
     }
   }
 
@@ -924,8 +962,9 @@
       layout("boot");
       watchSidebar();
       bindTabSync();
+      ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.19 (left chrome follows Firefox theme colors)");
+      logAlways("ready v0.5.22 (Sidebery selected; native launcher suppressed)");
     };
 
     if ($("nav-bar")) boot();

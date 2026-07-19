@@ -201,6 +201,12 @@ grep -Fq 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true)
   printf '\n// Zenfox\nuser_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);\n' >> "$USER_JS"
 grep -Fq 'user_pref("userChromeJS.enabled", true);' "$USER_JS" 2>/dev/null || \
   printf 'user_pref("userChromeJS.enabled", true);\n' >> "$USER_JS"
+grep -Fq 'user_pref("sidebar.revamp", false);' "$USER_JS" 2>/dev/null || \
+  printf 'user_pref("sidebar.revamp", false);\n' >> "$USER_JS"
+grep -Fq 'user_pref("sidebar.verticalTabs", false);' "$USER_JS" 2>/dev/null || \
+  printf 'user_pref("sidebar.verticalTabs", false);\n' >> "$USER_JS"
+grep -Fq 'user_pref("sidebar.visibility", "hide-sidebar");' "$USER_JS" 2>/dev/null || \
+  printf 'user_pref("sidebar.visibility", "hide-sidebar");\n' >> "$USER_JS"
 
 install_program_file "$PAYLOAD/firefox/config.js" "$FIREFOX_ROOT/config.js"
 install_program_file "$PAYLOAD/firefox/defaults/pref/config-prefs.js" "$FIREFOX_ROOT/defaults/pref/config-prefs.js"
