@@ -39,7 +39,7 @@ Zenfox 是一个独立的自定义项目，与 Zen Browser、Mozilla 或 Sideber
 打开系统自带的 **PowerShell** 或 **Windows Terminal**，运行：
 
 ```powershell
-$p=Join-Path $env:TEMP 'zenfox-install.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/sanhua1/zenfox/main/install-windows.ps1' -OutFile $p; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
+$p=Join-Path $env:TEMP 'zenfox-install.ps1'; $u='https://raw.githubusercontent.com/sanhua1/zenfox/main/install-windows.ps1?cb='+[guid]::NewGuid().ToString('N'); Invoke-WebRequest -UseBasicParsing -Headers @{'Cache-Control'='no-cache'} -Uri $u -OutFile $p; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
 ```
 
 不需要安装 PowerShell 7、Git、Python 或 Node.js。当 Zenfox 向 Firefox 程序目录写入 fx-autoconfig 的两个启动文件时，Windows 可能会显示一次 UAC 授权窗口。
@@ -47,13 +47,13 @@ $p=Join-Path $env:TEMP 'zenfox-install.ps1'; Invoke-WebRequest -UseBasicParsing 
 ### macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sanhua1/zenfox/main/install-macos.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/sanhua1/zenfox/main/install-macos.sh?cb=$(date +%s)-$$" | bash
 ```
 
 ### Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sanhua1/zenfox/main/install-linux.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/sanhua1/zenfox/main/install-linux.sh?cb=$(date +%s)-$$" | bash
 ```
 
 Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Flatpak 版本的程序目录受到沙盒或只读限制，因此暂不支持。

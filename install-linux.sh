@@ -114,7 +114,7 @@ prepare_source() {
   fi
   TMP_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/zenfox.XXXXXX")
   log "Downloading Zenfox $ZENFOX_REF from GitHub..." >&2
-  curl -fsSL "https://github.com/$ZENFOX_REPO/archive/$ZENFOX_REF.tar.gz" -o "$TMP_ROOT/zenfox.tar.gz"
+  curl -fsSL -H 'Cache-Control: no-cache' "https://github.com/$ZENFOX_REPO/archive/$ZENFOX_REF.tar.gz?cb=$(date +%s)-$$" -o "$TMP_ROOT/zenfox.tar.gz"
   tar -xzf "$TMP_ROOT/zenfox.tar.gz" -C "$TMP_ROOT"
   payload_dir=$(find "$TMP_ROOT" -mindepth 2 -maxdepth 3 -type d -name payload -print -quit)
   [[ -n "$payload_dir" ]] || die "Downloaded archive does not contain payload/."

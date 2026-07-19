@@ -150,8 +150,10 @@ function Get-SourceRoot {
     $script:TempRoot = Join-Path $env:TEMP ("zenfox-" + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $script:TempRoot | Out-Null
     $archive = Join-Path $script:TempRoot 'zenfox.zip'
+    $cacheBuster = [guid]::NewGuid().ToString('N')
+    $archiveUri = "https://github.com/$ZenfoxRepo/archive/$ZenfoxRef.zip?cb=$cacheBuster"
     Write-Zenfox "Downloading Zenfox $ZenfoxRef from GitHub..."
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/$ZenfoxRepo/archive/$ZenfoxRef.zip" -OutFile $archive
+    Invoke-WebRequest -UseBasicParsing -Headers @{ 'Cache-Control' = 'no-cache' } -Uri $archiveUri -OutFile $archive
     Expand-Archive -LiteralPath $archive -DestinationPath $script:TempRoot -Force
     $payload = Get-ChildItem $script:TempRoot -Directory -Recurse -Filter payload | Select-Object -First 1
     if (-not $payload) { Stop-Zenfox 'Downloaded archive does not contain payload/.' }

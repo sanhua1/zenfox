@@ -35,7 +35,7 @@ The installers detect Firefox, the active Profile, and Sidebery before changing 
 Open the built-in **PowerShell** or **Windows Terminal** and run:
 
 ```powershell
-$p=Join-Path $env:TEMP 'zenfox-install.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/sanhua1/zenfox/main/install-windows.ps1' -OutFile $p; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
+$p=Join-Path $env:TEMP 'zenfox-install.ps1'; $u='https://raw.githubusercontent.com/sanhua1/zenfox/main/install-windows.ps1?cb='+[guid]::NewGuid().ToString('N'); Invoke-WebRequest -UseBasicParsing -Headers @{'Cache-Control'='no-cache'} -Uri $u -OutFile $p; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
 ```
 
 PowerShell 7, Git, Python, and Node.js are not required. Windows may show one UAC prompt when Zenfox writes the two fx-autoconfig bootstrap files into the Firefox program directory.
@@ -43,13 +43,13 @@ PowerShell 7, Git, Python, and Node.js are not required. Windows may show one UA
 ### macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sanhua1/zenfox/main/install-macos.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/sanhua1/zenfox/main/install-macos.sh?cb=$(date +%s)-$$" | bash
 ```
 
 ### Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sanhua1/zenfox/main/install-linux.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/sanhua1/zenfox/main/install-linux.sh?cb=$(date +%s)-$$" | bash
 ```
 
 Native/tarball Firefox installations are supported. Snap and Flatpak Firefox are not supported because their program directories are sandboxed or read-only.
