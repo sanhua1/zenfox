@@ -102,21 +102,43 @@ function Get-FirefoxProfile {
 
 function Get-SideberyStatus([string]$Profile) {
     $manifest = Join-Path $Profile 'extensions.json'
-    if (-not (Test-Path $manifest)) { return [pscustomobject]@{ Installed = $false; Active = $false; Version = $null } }
+    if (-not (Test-Path $manifest)) {
+        return [pscustomobject]@{ Installed = $false; Active = $false; Version = $null; StateKnown = $true }
+    }
+
+    $raw = $null
     try {
-        $data = Get-Content -Raw -LiteralPath $manifest | ConvertFrom-Json
+        # Firefox writes UTF-8 JSON. Reading it explicitly avoids Windows
+        # PowerShell 5.1 interpreting non-ASCII extension metadata as ANSI.
+        $raw = [IO.File]::ReadAllText($manifest, [Text.Encoding]::UTF8)
+        $data = $raw | ConvertFrom-Json
         $addon = @($data.addons) | Where-Object { $_.id -eq $SideberyId } | Select-Object -First 1
         if ($addon) {
             return [pscustomobject]@{
                 Installed = $true
                 Active = [bool]$addon.active
                 Version = [string]$addon.version
+                StateKnown = $true
             }
         }
     } catch {
-        Stop-Zenfox "Could not parse $manifest"
+        # Some real-world extensions.json files contain data that the older
+        # ConvertFrom-Json bundled with Windows PowerShell 5.1 cannot handle.
+        # The exact extension ID still lets us safely confirm installation.
+        if ($null -eq $raw) {
+            try { $raw = [IO.File]::ReadAllText($manifest, [Text.Encoding]::UTF8) } catch { $raw = $null }
+        }
+        if ($raw -and $raw.Contains($SideberyId)) {
+            return [pscustomobject]@{
+                Installed = $true
+                Active = $false
+                Version = $null
+                StateKnown = $false
+            }
+        }
+        Stop-Zenfox "Could not read Sidebery status from $manifest. $($_.Exception.Message)"
     }
-    return [pscustomobject]@{ Installed = $false; Active = $false; Version = $null }
+    return [pscustomobject]@{ Installed = $false; Active = $false; Version = $null; StateKnown = $true }
 }
 
 function Get-SourceRoot {
@@ -181,7 +203,9 @@ try {
     Write-Zenfox "Profile: $profile"
 
     $sidebery = Get-SideberyStatus $profile
-    if ($sidebery.Installed -and $sidebery.Active) {
+    if ($sidebery.Installed -and -not $sidebery.StateKnown) {
+        Write-Zenfox 'Sidebery: installed (activation state unavailable; continuing)'
+    } elseif ($sidebery.Installed -and $sidebery.Active) {
         Write-Zenfox "Sidebery: installed and active (v$($sidebery.Version))"
     } elseif ($sidebery.Installed) {
         Write-Zenfox "Sidebery: installed but disabled (v$($sidebery.Version))"
