@@ -52,7 +52,7 @@ function Get-FirefoxInstall {
 
 function Get-IniDefault([string]$Path) {
     if (-not (Test-Path $Path)) { return $null }
-    foreach ($line in Get-Content -LiteralPath $Path) {
+    foreach ($line in Get-Content -LiteralPath $Path -Encoding UTF8) {
         if ($line -match '^Default=(.+)$') { return $Matches[1].Trim() }
     }
     return $null
@@ -62,7 +62,7 @@ function Get-ProfileDefault([string]$Path) {
     if (-not (Test-Path $Path)) { return $null }
     $currentPath = $null
     $isDefault = $false
-    foreach ($line in (Get-Content -LiteralPath $Path) + '[End]') {
+    foreach ($line in (Get-Content -LiteralPath $Path -Encoding UTF8) + '[End]') {
         if ($line -match '^\[') {
             if ($isDefault -and $currentPath) { return $currentPath }
             $currentPath = $null
@@ -76,6 +76,30 @@ function Get-ProfileDefault([string]$Path) {
     return $null
 }
 
+function Test-ProfileInUse([string]$Profile) {
+    $lockPath = Join-Path $Profile 'parent.lock'
+    if (-not (Test-Path $lockPath -PathType Leaf)) { return $false }
+
+    $stream = $null
+    try {
+        # parent.lock can remain on disk after Firefox exits. It represents a
+        # running profile only while Firefox prevents an exclusive open.
+        $stream = [IO.File]::Open(
+            $lockPath,
+            [IO.FileMode]::Open,
+            [IO.FileAccess]::Read,
+            [IO.FileShare]::None
+        )
+        return $false
+    } catch [IO.IOException] {
+        return $true
+    } catch {
+        return $false
+    } finally {
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
 function Get-FirefoxProfile {
     if ($env:ZENFOX_PROFILE) {
         if (-not (Test-Path $env:ZENFOX_PROFILE -PathType Container)) {
@@ -86,6 +110,20 @@ function Get-FirefoxProfile {
 
     $base = Join-Path $env:APPDATA 'Mozilla\Firefox'
     if (-not (Test-Path (Join-Path $base 'profiles.ini'))) { return $null }
+
+    # A profile launched from about:profiles does not have to be the install's
+    # default profile. Prefer the one Firefox is actively locking so files are
+    # installed into the profile visible in the current browser window.
+    $profilesDir = Join-Path $base 'Profiles'
+    $activeProfiles = @(Get-ChildItem $profilesDir -Directory -ErrorAction SilentlyContinue |
+        Where-Object { Test-ProfileInUse $_.FullName })
+    if ($activeProfiles.Count -eq 1) {
+        return $activeProfiles[0].FullName
+    }
+    if ($activeProfiles.Count -gt 1) {
+        Stop-Zenfox 'Multiple running Firefox profiles were found. Close the extra Firefox windows, or set ZENFOX_PROFILE to the intended profile path.'
+    }
+
     $relative = Get-IniDefault (Join-Path $base 'installs.ini')
     if (-not $relative) { $relative = Get-ProfileDefault (Join-Path $base 'profiles.ini') }
     if ($relative) {
@@ -93,7 +131,6 @@ function Get-FirefoxProfile {
         if (Test-Path $candidate -PathType Container) { return (Resolve-Path $candidate).Path }
     }
 
-    $profilesDir = Join-Path $base 'Profiles'
     $fallback = Get-ChildItem $profilesDir -Directory -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if ($fallback) { return $fallback.FullName }
@@ -102,8 +139,17 @@ function Get-FirefoxProfile {
 
 function Get-SideberyStatus([string]$Profile) {
     $manifest = Join-Path $Profile 'extensions.json'
+    $extensionsDir = Join-Path $Profile 'extensions'
+    $sideberyXpi = Join-Path $extensionsDir ($SideberyId + '.xpi')
+    $sideberyDir = Join-Path $extensionsDir $SideberyId
+    $artifactInstalled = (Test-Path $sideberyXpi -PathType Leaf) -or (Test-Path $sideberyDir -PathType Container)
     if (-not (Test-Path $manifest)) {
-        return [pscustomobject]@{ Installed = $false; Active = $false; Version = $null; StateKnown = $true }
+        return [pscustomobject]@{
+            Installed = $artifactInstalled
+            Active = $false
+            Version = $null
+            StateKnown = -not $artifactInstalled
+        }
     }
 
     $raw = $null
@@ -121,6 +167,14 @@ function Get-SideberyStatus([string]$Profile) {
                 StateKnown = $true
             }
         }
+        if ($raw.Contains($SideberyId) -or $artifactInstalled) {
+            return [pscustomobject]@{
+                Installed = $true
+                Active = $false
+                Version = $null
+                StateKnown = $false
+            }
+        }
     } catch {
         # Some real-world extensions.json files contain data that the older
         # ConvertFrom-Json bundled with Windows PowerShell 5.1 cannot handle.
@@ -128,7 +182,7 @@ function Get-SideberyStatus([string]$Profile) {
         if ($null -eq $raw) {
             try { $raw = [IO.File]::ReadAllText($manifest, [Text.Encoding]::UTF8) } catch { $raw = $null }
         }
-        if ($raw -and $raw.Contains($SideberyId)) {
+        if (($raw -and $raw.Contains($SideberyId)) -or $artifactInstalled) {
             return [pscustomobject]@{
                 Installed = $true
                 Active = $false

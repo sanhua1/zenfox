@@ -73,12 +73,27 @@ resolve_profile() {
   local base="$HOME/.mozilla/firefox"
   local rel=""
   local candidate=""
+  local profile=""
+  local active_profiles=()
   if [[ -n "${ZENFOX_PROFILE:-}" ]]; then
     [[ -d "$ZENFOX_PROFILE" ]] || die "ZENFOX_PROFILE does not exist: $ZENFOX_PROFILE"
     printf '%s\n' "$ZENFOX_PROFILE"
     return
   fi
   [[ -f "$base/profiles.ini" ]] || return 1
+  for profile in "$base"/*; do
+    [[ -d "$profile" ]] || continue
+    if [[ -e "$profile/parent.lock" || -L "$profile/.parentlock" || -e "$profile/lock" || -L "$profile/lock" ]]; then
+      active_profiles+=("$profile")
+    fi
+  done
+  if [[ ${#active_profiles[@]} -eq 1 ]]; then
+    printf '%s\n' "${active_profiles[0]}"
+    return
+  fi
+  if [[ ${#active_profiles[@]} -gt 1 ]]; then
+    die "Multiple running Firefox profiles were found. Close the extra Firefox windows, or set ZENFOX_PROFILE."
+  fi
   if [[ -f "$base/installs.ini" ]]; then
     rel=$(awk -F= '$1 == "Default" { print substr($0, index($0, "=") + 1); exit }' "$base/installs.ini")
   fi
@@ -123,7 +138,9 @@ prepare_source() {
 
 sidebery_installed() {
   local manifest="$1/extensions.json"
-  [[ -f "$manifest" ]] && grep -Fq "$SIDEBERY_ID" "$manifest"
+  local xpi="$1/extensions/$SIDEBERY_ID.xpi"
+  local unpacked="$1/extensions/$SIDEBERY_ID"
+  { [[ -f "$manifest" ]] && grep -Fq "$SIDEBERY_ID" "$manifest"; } || [[ -f "$xpi" || -d "$unpacked" ]]
 }
 
 confirm() {

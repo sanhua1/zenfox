@@ -107,7 +107,7 @@ The default commands track the `main` branch. Stable releases can instead pin `Z
 
 ## Advanced overrides
 
-The scripts normally choose Firefox's install-default Profile. These environment variables override automatic detection:
+The scripts prefer the currently running Firefox Profile when exactly one is active, then fall back to Firefox's install-default Profile. These environment variables override automatic detection:
 
 ```text
 ZENFOX_PROFILE

@@ -112,7 +112,7 @@ Firefox 更新可能覆盖程序目录里的两个启动文件。重新运行安
 
 ## 高级路径覆盖
 
-脚本默认选择当前 Firefox 安装所指定的默认 Profile。以下环境变量可以覆盖自动检测：
+只有一个 Firefox Profile 正在运行时，脚本会优先选择该 Profile；否则回退到当前 Firefox 安装指定的默认 Profile。以下环境变量可以覆盖自动检测：
 
 ```text
 ZENFOX_PROFILE
