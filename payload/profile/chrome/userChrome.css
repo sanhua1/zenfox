@@ -1,0 +1,642 @@
+/* ==========================================================================
+   PLAN.md · 样式 v0.5.19
+   重点：原生 urlbar 进第二行；JS 禁用 popover/top-layer breakout，
+         原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
+   ========================================================================== */
+
+:root {
+  --uc-left-width: 307px;
+  /* 侧栏顶让位；JS 按 #nav-bar 底边实测写入 --uc-chrome-height */
+  --uc-chrome-height: 86px;
+  --uc-sidebar-gap: 0px; /* Sidebery 与上方 chrome 无缝衔接 */
+  --uc-pad: 4px;
+  --uc-urlbar-height: 24px;
+  --uc-urlbar-width: calc(var(--uc-left-width) - 2 * var(--uc-pad));
+  --uc-urlbar-top: 32px;
+  --uc-row1-height: 26px;
+  --uc-icon-size: 24px;
+  /* 扩展行略高：给篡改猴等右上角红点/角标留空，避免被裁切 */
+  --uc-ext-size: 30px;
+  --uc-ext-icon: 16px;
+  --uc-ext-slot: 32px;
+  /* Follow the active Firefox/WebExtension theme, with current dark fallbacks. */
+  --uc-chrome-bg: var(--toolbar-bgcolor, var(--lwt-accent-color, #1a1a1a));
+  --uc-chrome-fg: var(--toolbar-color, var(--lwt-text-color, #f9f9fa));
+  --uc-chrome-border: var(
+    --chrome-content-separator-color,
+    color-mix(in srgb, var(--uc-chrome-fg) 12%, transparent)
+  );
+  --uc-gap: 3px;
+
+  --urlbar-height: var(--uc-urlbar-height) !important;
+  --urlbar-toolbar-height: var(--uc-urlbar-height) !important;
+  --urlbar-container-height: var(--uc-urlbar-height) !important;
+  /* 兼容旧版 Firefox；152+ 由 JS 直接禁用 top-layer breakout。 */
+  --urlbar-width: var(--uc-urlbar-width) !important;
+  --urlbar-container-width: var(--uc-urlbar-width) !important;
+}
+
+/* ========== 定制模式 ========== */
+:root[customizing] #navigator-toolbox,
+:root[customizing] #nav-bar {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+  overflow: visible !important;
+  transform: none !important;
+  clip-path: none !important;
+  contain: none !important;
+}
+
+:root[customizing] #uc-left-host,
+:root[customizing] .uc-left-row {
+  display: contents !important;
+}
+
+:root[customizing] #sidebar-box,
+:root[customizing] #sidebar-main {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding-top: 0 !important;
+}
+
+/* ========== 抹掉顶栏横条 ========== */
+:root:not([customizing]) #navigator-toolbox {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: var(--uc-left-width) !important;
+  max-width: var(--uc-left-width) !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+  z-index: 10000 !important;
+}
+
+:root:not([customizing]) #navigator-toolbox-background {
+  max-height: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+:root:not([customizing]) #TabsToolbar,
+:root:not([customizing]) #PersonalToolbar,
+:root:not([customizing]) #toolbar-menubar {
+  visibility: collapse !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+:root:not([customizing]) #titlebar {
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  appearance: none !important;
+}
+
+.titlebar-spacer,
+:root:not([customizing]) #nav-bar toolbarspring,
+:root:not([customizing]) #vertical-spacer {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ========== 左栏 ========== */
+:root:not([customizing]) #nav-bar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: var(--uc-left-width) !important;
+  min-width: var(--uc-left-width) !important;
+  max-width: var(--uc-left-width) !important;
+  height: auto !important;
+  /* 勿用 min-height: var(--uc-chrome-height)，会在三行下方多出空白条盖住 Sidebery */
+  min-height: 0 !important;
+  max-height: none !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: var(--uc-gap) !important;
+
+  box-sizing: border-box !important;
+  padding: var(--uc-pad) !important;
+  margin: 0 !important;
+
+  background: var(--uc-chrome-bg) !important;
+  color: var(--uc-chrome-fg) !important;
+  border-right: 1px solid var(--uc-chrome-border) !important;
+  border-bottom: none !important;
+
+  /* 原生 urlbar 已寄放，不再需要 clip 整栏（clip 会裁掉第三行插件图标） */
+  overflow: visible !important;
+  contain: none !important;
+  clip-path: none !important;
+
+  -moz-window-dragging: drag !important;
+  z-index: 10000 !important;
+}
+
+:root:not([customizing]) #nav-bar toolbarbutton,
+:root:not([customizing]) #nav-bar toolbaritem,
+:root:not([customizing]) #nav-bar #urlbar-container,
+:root:not([customizing]) #nav-bar .titlebar-buttonbox-container {
+  -moz-window-dragging: no-drag !important;
+}
+
+/* 不再依赖原生 urlbar 展开 */
+
+/* ========== 三行宿主（扩展留在 customization-target，保证点击热区=图标） ========== */
+:root:not([customizing]) #uc-left-host {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--uc-gap) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 1 !important;
+  order: 1 !important;
+}
+
+:root:not([customizing]) .uc-left-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  gap: 2px !important;
+  position: relative !important;
+}
+
+/* 行1：必须在 url 之上 */
+:root:not([customizing]) #uc-left-row1 {
+  order: 1 !important;
+  min-height: var(--uc-row1-height) !important;
+  position: relative !important;
+  z-index: 50 !important;
+  flex-shrink: 0 !important;
+  background: var(--uc-chrome-bg) !important;
+  /* Row1 uses equal button slots instead of a second inter-item gap. */
+  gap: 0 !important;
+}
+
+:root:not([customizing]) #uc-left-row1 .titlebar-buttonbox-container {
+  display: flex !important;
+  visibility: visible !important;
+  position: relative !important;
+  z-index: 51 !important;
+  flex-shrink: 0 !important;
+  margin-inline-end: 4px !important;
+}
+
+:root:not([customizing]) #uc-left-row1 #PanelUI-button,
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
+:root:not([customizing]) #uc-left-row1 #fxa-toolbar-menu-button,
+:root:not([customizing]) #uc-left-row1 #downloads-button,
+:root:not([customizing]) #uc-left-row1 #unified-extensions-button,
+:root:not([customizing]) #uc-left-row1 #back-button,
+:root:not([customizing]) #uc-left-row1 #forward-button,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button,
+:root:not([customizing]) #uc-left-row1 #reload-button,
+:root:not([customizing]) #uc-left-row1 #stop-button {
+  position: relative !important;
+  z-index: 51 !important;
+  flex-shrink: 0 !important;
+  height: var(--uc-row1-height) !important;
+  min-width: var(--uc-icon-size) !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/*
+ * Account, navigation, unified extensions, and downloads use equal 24px slots.
+ * Their icon centres therefore remain exactly equidistant.
+ */
+:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button,
+:root:not([customizing]) #uc-left-row1 > #PanelUI-button,
+:root:not([customizing]) #uc-left-row1 > #back-button,
+:root:not([customizing]) #uc-left-row1 > #forward-button,
+:root:not([customizing]) #uc-left-row1 > #stop-reload-button,
+:root:not([customizing]) #uc-left-row1 > #unified-extensions-button,
+:root:not([customizing]) #uc-left-row1 > #downloads-button {
+  box-sizing: border-box !important;
+  flex: 0 0 24px !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Preserve the accepted starting anchor for the compact control group. */
+:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button {
+  margin-inline-start: 8px !important;
+}
+
+/* Firefox adds toolbar-end padding to this inner button in its native home. */
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > #reload-button,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > #stop-button {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding-inline: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/*
+ * Firefox's solid native puzzle. Its circular notch is part of the SVG path,
+ * not a mask; explicitly clear inherited clipping while keeping that shape.
+ */
+:root:not([customizing]) #uc-left-row1 > #unified-extensions-button,
+:root:not([customizing]) #uc-left-row1 > #unified-extensions-button > .toolbarbutton-icon {
+  list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.svg") !important;
+  clip-path: none !important;
+  mask: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+:root:not([customizing]) #uc-left-row1 > #unified-extensions-button > .toolbarbutton-icon {
+  box-sizing: border-box !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: currentColor !important;
+  fill-opacity: 1 !important;
+}
+
+/* Sidebery 常驻时原生“显示/隐藏侧边栏”按钮冗余：不显示、不占位。 */
+:root:not([customizing]) #sidebar-button {
+  display: none !important;
+  visibility: collapse !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 诊断时显露的 Firefox Profiler toolbar widget：不进 row3，不占位。 */
+:root:not([customizing]) #profiler-button,
+:root:not([customizing]) #profiler-button-button {
+  display: none !important;
+  visibility: collapse !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 行2：原生 #urlbar-container（证书/站点信息 + Places 联想 + 书签星） */
+:root:not([customizing]) #uc-left-row2 {
+  order: 2 !important;
+  position: relative !important;
+  z-index: 40 !important;
+  min-height: var(--uc-urlbar-height) !important;
+  height: auto !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 旧仿地址栏：若残留则隐藏 */
+:root:not([customizing]) #uc-fake-url {
+  display: none !important;
+}
+
+/* —— 行内收纳：未展开时 —— */
+:root:not([customizing]) #uc-left-row2 > #urlbar-container,
+:root:not([customizing]) #nav-bar #uc-left-row2 #urlbar-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: var(--uc-urlbar-height) !important;
+  min-height: var(--uc-urlbar-height) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  z-index: 20 !important;
+  -moz-window-dragging: no-drag !important;
+  /* 覆盖 FF 可能写入的容器宽 */
+  --urlbar-width: 100% !important;
+  --urlbar-container-width: 100% !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: var(--uc-urlbar-height) !important;
+  min-height: var(--uc-urlbar-height) !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+  font-size: 11px !important;
+  --urlbar-width: 100% !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar-background {
+  border-radius: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar-input,
+:root:not([customizing]) #uc-left-row2 .urlbar-input-box {
+  font-size: 11px !important;
+}
+
+/* Firefox 152 新版 HTTPS/证书按钮：与 URL 文字做 3px 视觉对齐。 */
+:root:not([customizing]) #uc-left-row2 #trust-icon-container {
+  position: relative !important;
+  top: -3px !important;
+}
+
+/*
+ * Firefox 152 的 moz-urlbar 是 manual popover。breakout 会把它提升到
+ * top layer，脱离 row2 的宽度参照。JS 用原生 blocker API 关闭该
+ * breakout；[open] 仍由原生 UrlbarView 管理查询、选择与导航。
+ */
+:root:not([customizing]) #uc-left-row2 {
+  isolation: isolate !important;
+  contain: inline-size !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar[open] {
+  display: block !important;
+  position: absolute !important;
+  inset: 0 auto auto 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: var(--uc-urlbar-height) !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 10050 !important;
+  --urlbar-width: 100% !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar[open] > .urlbar-input-container {
+  width: 100% !important;
+  height: var(--uc-urlbar-height) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* 覆盖 Firefox 的 `.urlbar:not([breakout]) > .urlbarView { display:none }`。 */
+:root:not([customizing]) #uc-left-row2 #urlbar[open] > .urlbarView {
+  display: block !important;
+  position: relative !important;
+  left: 0 !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: clip !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar[open] > #urlbar-background,
+:root:not([customizing]) #uc-left-row2 .urlbarView-body-outer,
+:root:not([customizing]) #uc-left-row2 .urlbarView-body-inner,
+:root:not([customizing]) #uc-left-row2 .urlbarView-results {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/*
+ * 行3 = XUL #uc-left-row3（与 row1 同手法）
+ * 警告：
+ *  - 不要把 toolbarbutton 挪进 HTML div → 图标与点击热区错位
+ *  - 不要给 XUL toolbarbutton / badge-stack 设 display:flex → 同样错位
+ *  - 不要强行固定 width/height 盖住 XUL 内部布局
+ *  - 必须关掉 overflow，否则窄左栏会把扩展塞进 ">>" 面板
+ */
+:root:not([customizing]) #nav-bar-overflow-button {
+  display: none !important;
+  visibility: collapse !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 0 !important;
+  order: 99 !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+:root:not([customizing]) #nav-bar {
+  overflow: visible !important;
+}
+
+/* 原生 CUI 目标已搬空，折叠掉，避免占位 */
+:root:not([customizing]) #nav-bar-customization-target {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  order: 9 !important;
+}
+
+/* —— 扩展行（XUL hbox）—— */
+:root:not([customizing]) #uc-left-row3 {
+  order: 3 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: var(--uc-ext-slot) !important;
+  height: auto !important;
+  margin: 0 !important;
+  /* 紧凑方格换行；角标通过 overflow 向外显示。 */
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 5 !important;
+  /* 保持 XUL 盒模型；若引擎映射为 flex 也只做换行 */
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0 !important;
+  background: transparent !important;
+  -moz-window-dragging: no-drag !important;
+}
+
+/*
+ * 每个扩展占用相同的 32×32px 网格槽位；行宽变化时仍由 flex-wrap
+ * 自动换行。不改 badge-stack 的布局模式，以保持角标和点击区对齐。
+ */
+:root:not([customizing]) #uc-left-row3 > toolbarbutton,
+:root:not([customizing]) #uc-left-row3 > toolbaritem {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  inset: auto !important;
+  transform: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  box-sizing: border-box !important;
+  flex: 0 0 var(--uc-ext-slot) !important;
+  width: var(--uc-ext-slot) !important;
+  min-width: var(--uc-ext-slot) !important;
+  max-width: var(--uc-ext-slot) !important;
+  height: var(--uc-ext-slot) !important;
+  min-height: var(--uc-ext-slot) !important;
+  max-height: var(--uc-ext-slot) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  -moz-box-align: center !important;
+  -moz-box-pack: center !important;
+  -moz-window-dragging: no-drag !important;
+  --toolbarbutton-inner-padding: 0 !important;
+}
+
+:root:not([customizing]) #uc-left-row3 > toolbarbutton .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-row3 > toolbaritem .toolbarbutton-icon {
+  box-sizing: border-box !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+:root:not([customizing]) #uc-left-row3 .toolbarbutton-badge-stack {
+  overflow: visible !important;
+  /* 切勿 display:flex — 会让角标/图标与点击区脱节 */
+}
+
+:root:not([customizing]) #uc-left-row3 .toolbarbutton-badge {
+  overflow: visible !important;
+  z-index: 2 !important;
+}
+
+:root:not([customizing]) #uc-left-row3 > toolbarspring {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* ========== 侧栏：顶让位 = chrome 实测高度，无额外空隙 ========== */
+:root:not([customizing]) #sidebar-box,
+:root:not([customizing]) #sidebar-main {
+  /*
+   * 不覆盖 width/min-width/max-width：交给 Firefox 原生 splitter 调整。
+   * JS 用 ResizeObserver 只读实际宽度，再单向同步给上方 chrome。
+   */
+  /* --uc-chrome-height 由 JS 设为 #nav-bar 底边；gap 为 0 时 Sidebery 紧贴其下。 */
+  padding-top: calc(var(--uc-chrome-height) + var(--uc-sidebar-gap, 4px)) !important;
+  box-sizing: border-box !important;
+  background: var(--uc-chrome-bg) !important;
+}
+
+#sidebar-header {
+  display: none !important;
+}
+
+/* Firefox AI / AI Window 工具栏入口 — 不是扩展，不进第三行。 */
+:root:not([customizing]) #ai-window-toggle,
+:root:not([customizing]) #ai-window-toggle-button,
+:root:not([customizing]) #smartwindow-ask-button,
+:root:not([customizing]) #smart-window-ask-button,
+:root:not([customizing]) #nav-bar toolbarbutton[label="Ask"],
+:root:not([customizing]) #nav-bar toolbarbutton[tooltiptext*="Ask" i],
+:root:not([customizing]) #nav-bar toolbarbutton[tooltiptext*="chatbot" i],
+:root:not([customizing]) #nav-bar [id*="chatbot" i],
+:root:not([customizing]) #nav-bar [id*="genai" i],
+:root:not([customizing]) #nav-bar [id*="aichat" i],
+:root:not([customizing]) #uc-left-row3 toolbarbutton[label="Ask"],
+:root:not([customizing]) .browser-callout,
+:root:not([customizing]) .feature-callout,
+:root:not([customizing]) #selection-shortcut-action-panel,
+:root:not([customizing]) #ai-chatbot-button,
+:root:not([customizing]) #page-action-buttons #taskbar-tabs-button {
+  display: none !important;
+  visibility: collapse !important;
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}

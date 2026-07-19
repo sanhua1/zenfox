@@ -1,0 +1,33 @@
+/* ==========================================================================
+   Sidebery 配套样式（可选）
+   --------------------------------------------------------------------------
+   用法：Sidebery → Settings → Styles editor → 粘贴到对应区域
+   说明：userChrome 已用 padding-top 给侧栏顶部让位；若标签仍与地址栏重叠，
+        或顶部空隙过大，优先改 userChrome 的 --uc-chrome-height。
+        本文件用于微调 Sidebery 内部观感。
+   ========================================================================== */
+
+/* === Sidebar === */
+#root {
+  --general-border-radius: 6px;
+  /* 与 userChrome --uc-chrome-bg 接近 */
+  --frame-bg: #1a1a1a;
+  --frame-fg: #e8e8e8;
+}
+
+/* 若 userChrome 的 padding-top 不够/过多，可用下面微调（一般保持 0） */
+#root .Sidebar {
+  /* padding-top: 0; */
+}
+
+/* 稍微压紧标签行，多露出几条标签 */
+#root .Tab {
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+
+/* 顶部工具条（新建标签等）更扁一点 */
+#root .BottomBar,
+#root .Header {
+  min-height: 28px;
+}
