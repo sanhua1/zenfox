@@ -82,6 +82,7 @@ Firefox Profile
 ├── user.js                         # enables userChrome + userChromeJS
 └── chrome/
     ├── userChrome.css
+    ├── platform-windows-linux.css   # compact native window controls
     ├── sidebery-companion.css      # optional; paste into Sidebery styles
     ├── JS/LeftChrome.uc.js
     └── utils/                      # fx-autoconfig runtime
@@ -95,7 +96,7 @@ Run the same one-line install command again to update or repair Zenfox. Every ru
 
 For maintainers:
 
-- UI changes belong in `payload/profile/chrome/userChrome.css` and `payload/profile/chrome/JS/LeftChrome.uc.js`.
+- Shared UI changes belong in `payload/profile/chrome/userChrome.css` and `payload/profile/chrome/JS/LeftChrome.uc.js`; Windows/Linux window-control geometry lives in `payload/profile/chrome/platform-windows-linux.css`.
 - fx-autoconfig runtime updates belong in `payload/profile/chrome/utils/` and `payload/firefox/`.
 - Installer behavior is maintained in the three platform scripts.
 - Update `VERSION` whenever publishing a new Zenfox release.

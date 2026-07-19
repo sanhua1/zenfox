@@ -1,0 +1,59 @@
+/*
+ * Zenfox native window controls for Windows and Linux.
+ *
+ * LeftChrome moves Firefox's native caption-button box into row 1. These
+ * platform-only rules keep the original commands, but make their layout
+ * compact and use the requested macOS-like order.
+ */
+
+@media (-moz-platform: windows), (-moz-platform: linux) {
+  :root:not([customizing]) #uc-left-row1 > .titlebar-buttonbox-container {
+    order: -1 !important;
+    box-sizing: border-box !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-inline: 0 4px !important;
+    padding: 0 !important;
+  }
+
+  :root:not([customizing]) #uc-left-row1 .titlebar-buttonbox {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  :root:not([customizing]) #uc-left-row1 .titlebar-button {
+    box-sizing: border-box !important;
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    min-width: 20px !important;
+    max-width: 20px !important;
+    height: var(--uc-row1-height) !important;
+    min-height: var(--uc-row1-height) !important;
+    max-height: var(--uc-row1-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Requested left-to-right order: close, minimize, maximize/restore. */
+  :root:not([customizing]) #uc-left-row1 .titlebar-close {
+    order: 1 !important;
+  }
+
+  :root:not([customizing]) #uc-left-row1 .titlebar-min {
+    order: 2 !important;
+  }
+
+  :root:not([customizing]) #uc-left-row1 .titlebar-max,
+  :root:not([customizing]) #uc-left-row1 .titlebar-restore {
+    order: 3 !important;
+  }
+}

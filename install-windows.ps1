@@ -251,6 +251,7 @@ try {
 
     $backupMap = @(
         @{ Source = (Join-Path $profile 'chrome\userChrome.css'); Destination = (Join-Path $backup 'profile\chrome\userChrome.css') },
+        @{ Source = (Join-Path $profile 'chrome\platform-windows-linux.css'); Destination = (Join-Path $backup 'profile\chrome\platform-windows-linux.css') },
         @{ Source = (Join-Path $profile 'chrome\JS\LeftChrome.uc.js'); Destination = (Join-Path $backup 'profile\chrome\JS\LeftChrome.uc.js') },
         @{ Source = (Join-Path $profile 'user.js'); Destination = (Join-Path $backup 'profile\user.js') },
         @{ Source = (Join-Path $firefox.Root 'config.js'); Destination = (Join-Path $backup 'firefox\config.js') },
@@ -268,6 +269,7 @@ try {
     New-Item -ItemType Directory -Path (Join-Path $chrome 'JS') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $chrome 'utils') -Force | Out-Null
     Copy-Item (Join-Path $payload 'profile\chrome\userChrome.css') (Join-Path $chrome 'userChrome.css') -Force
+    Copy-Item (Join-Path $payload 'profile\chrome\platform-windows-linux.css') (Join-Path $chrome 'platform-windows-linux.css') -Force
     Copy-Item (Join-Path $payload 'profile\chrome\JS\LeftChrome.uc.js') (Join-Path $chrome 'JS\LeftChrome.uc.js') -Force
     Copy-Item (Join-Path $payload 'profile\chrome\utils\*') (Join-Path $chrome 'utils') -Recurse -Force
     Copy-Item (Join-Path $payload 'profile\chrome\sidebery-companion.css') (Join-Path $chrome 'sidebery-companion.css') -Force

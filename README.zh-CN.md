@@ -86,6 +86,7 @@ Firefox Profile
 ├── user.js                         # 开启 userChrome 与 userChromeJS
 └── chrome/
     ├── userChrome.css
+    ├── platform-windows-linux.css   # Windows/Linux 紧凑窗口按钮
     ├── sidebery-companion.css      # 可选：粘贴到 Sidebery 样式编辑器
     ├── JS/LeftChrome.uc.js
     └── utils/                      # fx-autoconfig 运行组件
@@ -99,7 +100,7 @@ Firefox 更新可能覆盖程序目录里的两个启动文件。重新运行安
 
 对于维护者：
 
-- UI 样式更新放在 `payload/profile/chrome/userChrome.css`。
+- 通用 UI 样式更新放在 `payload/profile/chrome/userChrome.css`，Windows/Linux 窗口按钮布局放在 `payload/profile/chrome/platform-windows-linux.css`。
 - 浏览器结构与行为更新放在 `payload/profile/chrome/JS/LeftChrome.uc.js`。
 - fx-autoconfig 更新放在 `payload/profile/chrome/utils/` 和 `payload/firefox/`。
 - 安装行为分别由三个平台的安装脚本维护。
