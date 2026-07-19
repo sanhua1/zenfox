@@ -117,6 +117,10 @@ ZENFOX_FIREFOX_APP     # macOS
 ZENFOX_FIREFOX_ROOT   # Windows/Linux
 ```
 
+## Friendly links
+
+- [LINUX DO](https://linux.do/)
+
 ## Security
 
 `fx-autoconfig` executes privileged browser UI code. Review scripts before running them and install Zenfox only from a source you trust. The Windows `-ExecutionPolicy Bypass` flag applies only to that PowerShell process and does not change the machine's permanent execution policy.

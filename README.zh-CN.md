@@ -122,6 +122,10 @@ ZENFOX_FIREFOX_APP     # macOS
 ZENFOX_FIREFOX_ROOT   # Windows/Linux
 ```
 
+## 友情链接
+
+- [LINUX DO](https://linux.do/)
+
 ## 安全说明
 
 `fx-autoconfig` 会执行拥有浏览器界面内部权限的代码。运行前请检查脚本，并且只从可信来源安装 Zenfox。Windows 命令中的 `-ExecutionPolicy Bypass` 只对本次 PowerShell 进程生效，不会永久修改系统的脚本执行策略。
