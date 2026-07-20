@@ -241,6 +241,8 @@ grep -Fq 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true)
   printf '\n// Zenfox\nuser_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);\n' >> "$USER_JS"
 grep -Fq 'user_pref("userChromeJS.enabled", true);' "$USER_JS" 2>/dev/null || \
   printf 'user_pref("userChromeJS.enabled", true);\n' >> "$USER_JS"
+grep -Fq 'user_pref("svg.context-properties.content.enabled", true);' "$USER_JS" 2>/dev/null || \
+  printf 'user_pref("svg.context-properties.content.enabled", true);\n' >> "$USER_JS"
 grep -Fq 'user_pref("sidebar.revamp", false);' "$USER_JS" 2>/dev/null || \
   printf 'user_pref("sidebar.revamp", false);\n' >> "$USER_JS"
 grep -Fq 'user_pref("sidebar.verticalTabs", false);' "$USER_JS" 2>/dev/null || \

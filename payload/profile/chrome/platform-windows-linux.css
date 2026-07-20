@@ -9,11 +9,17 @@
 @media (-moz-platform: windows), (-moz-platform: linux) {
   :root:not([customizing]) #uc-left-row1 > .titlebar-buttonbox-container {
     order: -1 !important;
+    display: flex !important;
+    align-items: center !important;
     box-sizing: border-box !important;
     flex: 0 0 auto !important;
     width: auto !important;
     min-width: 0 !important;
     max-width: none !important;
+    height: var(--uc-row1-height) !important;
+    min-height: var(--uc-row1-height) !important;
+    max-height: var(--uc-row1-height) !important;
+    margin-block: 0 !important;
     margin-inline: 0 4px !important;
     padding: 0 !important;
   }
@@ -22,11 +28,14 @@
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    transform: translateY(1px) !important;
+    transform: none !important;
     box-sizing: border-box !important;
     width: auto !important;
     min-width: 0 !important;
     max-width: none !important;
+    height: var(--uc-row1-height) !important;
+    min-height: var(--uc-row1-height) !important;
+    max-height: var(--uc-row1-height) !important;
     margin: 0 !important;
     padding: 0 !important;
   }

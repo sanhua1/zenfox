@@ -54,9 +54,19 @@ curl -fsSL -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/sanhu
 
 Native/tarball Firefox installations are supported. Snap and Flatpak Firefox are not supported because their program directories are sandboxed or read-only.
 
-The installer can detect Sidebery but cannot modify Sidebery's private extension settings. Its optional companion CSS must be pasted into Sidebery's Styles editor manually.
+The installer detects Sidebery and enables `svg.context-properties.content.enabled` so Sidebery icons can follow the browser theme. Its optional companion CSS must still be pasted into Sidebery's Styles editor manually.
 
 On browser launch, Zenfox disables Firefox's separate native sidebar launcher and selects Sidebery as the active sidebar. This prevents new Firefox profiles from showing both the native launcher and the Sidebery panel.
+
+## ZenFox settings
+
+Right-click the upper-left Zenfox area and choose **ZenFox Settings**. The settings panel can add, hide, and sort Firefox's native single-button widgets in the second row. It supports drag-and-drop, move up/down controls, and restoring the default layout. The first and fourth rows are not affected.
+
+The ordered layout is stored in the Firefox preference `zenfox.quickActions.v1` and survives browser restarts. Extension actions, the URL bar, flexible spaces, and combined widgets are excluded from the candidate list.
+
+The settings interface follows Firefox's application language: Chinese locales use Chinese, while all other locales use English.
+
+The **Appearance** tab reads and updates Sidebery's `fontSize`, `density`, `--tabs-activated-fg`, and `--tabs-activated-bg` values. Zenfox changes only these allowlisted values, keeps the rest of Sidebery's settings and custom CSS intact, and saves their original values before the first write.
 
 ## Detection only
 

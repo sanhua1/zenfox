@@ -58,9 +58,19 @@ curl -fsSL -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/sanhu
 
 Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Flatpak 版本的程序目录受到沙盒或只读限制，因此暂不支持。
 
-安装脚本可以检测 Sidebery，但不能修改 Sidebery 扩展内部的私有设置。可选的配套 CSS 需要手动粘贴到 Sidebery 的样式编辑器中。
+安装脚本会检测 Sidebery，并启用 `svg.context-properties.content.enabled`，让 Sidebery 图标跟随浏览器主题。可选的配套 CSS 仍需手动粘贴到 Sidebery 的样式编辑器中。
 
 浏览器启动时，Zenfox 会关闭 Firefox 独立的原生侧边栏启动器，并将 Sidebery 选为当前侧边栏，避免新的 Firefox Profile 同时显示原生启动器和 Sidebery 面板。
+
+## ZenFox 设置
+
+在 Zenfox 左上角区域右键，选择 **ZenFox 设置**。设置面板可以添加、隐藏和排序第二行中的 Firefox 原生单按钮；支持拖拽、上移、下移，并可恢复默认布局。第一行和第四行不受该设置影响。
+
+配置保存在 Firefox 首选项 `zenfox.quickActions.v1` 中，重启浏览器后仍然有效。扩展按钮、地址栏、弹性空白和组合控件不会出现在候选列表中。
+
+设置界面跟随 Firefox 应用语言：中文语言使用中文，其他语言统一使用英文。
+
+**外观设置** 标签会读写 Sidebery 的 `fontSize`、`density`、`--tabs-activated-fg` 和 `--tabs-activated-bg`。Zenfox 只修改这些允许值，保留 Sidebery 其余设置和自定义 CSS，并在第一次写入前保存原值。
 
 ## 仅检测环境
 
