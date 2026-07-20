@@ -1,7 +1,7 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.26
+   PLAN.md · 样式 v0.5.27
    重点：固定操作进入第二行；原生 urlbar 与插件行依次下移，
          JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
@@ -288,8 +288,27 @@
   -moz-window-dragging: no-drag !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton,
 :root:not([customizing]) #uc-left-quick-actions > toolbaritem {
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: var(--uc-row1-height) !important;
+  min-height: var(--uc-row1-height) !important;
+  max-height: var(--uc-row1-height) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/*
+ * 所有单按钮型 CUI 控件共用外层状态背景。组合 toolbaritem 中的每个
+ * 子按钮也独立占一个槽位，后续增加原生控件时无需补专属 hover 规则。
+ */
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton {
+  appearance: none !important;
   position: relative !important;
   box-sizing: border-box !important;
   flex: 0 0 var(--uc-quick-slot) !important;
@@ -300,9 +319,14 @@
   min-height: var(--uc-row1-height) !important;
   max-height: var(--uc-row1-height) !important;
   margin: 0 !important;
-  padding: 0 !important;
+  padding: 1px 0 !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background-color: transparent !important;
+  background-clip: content-box !important;
   opacity: 1 !important;
   visibility: visible !important;
+  overflow: visible !important;
   align-items: center !important;
   justify-content: center !important;
   -moz-box-align: center !important;
@@ -310,8 +334,36 @@
   --toolbarbutton-inner-padding: 0 !important;
 }
 
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton:not([disabled]):hover,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton:not([disabled]):hover {
+  background-color: var(--toolbarbutton-background-color-hover) !important;
+}
+
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]) {
+  background-color: var(--toolbarbutton-background-color-active) !important;
+}
+
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton:focus-visible,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton:focus-visible {
+  outline: var(--focus-outline) !important;
+  outline-offset: -2px !important;
+}
+
+/* 原生内部节点只负责图标、角标和动画，不再各自绘制状态背景。 */
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  outline: none !important;
+}
+
 :root:not([customizing]) #uc-left-quick-actions > toolbarbutton > .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem .toolbarbutton-icon {
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton > .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: var(--uc-quick-icon) !important;
   height: var(--uc-quick-icon) !important;
@@ -321,6 +373,11 @@
   max-height: var(--uc-quick-icon) !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+:root:not([customizing]) #uc-left-quick-actions .toolbarbutton-badge-stack,
+:root:not([customizing]) #uc-left-quick-actions #downloads-indicator-anchor {
+  overflow: visible !important;
 }
 
 /*

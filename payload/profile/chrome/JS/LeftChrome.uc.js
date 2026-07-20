@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.26 — four-row native chrome + resizable synced sidebar
-// @version         0.5.26
+// @description     PLAN.md v0.5.27 — four-row native chrome + resizable synced sidebar
+// @version         0.5.27
 // @author          local
 // ==/UserScript==
 
@@ -50,6 +50,7 @@
  *            extension rows down without changing their internal behavior.
  *   v0.5.25 matches the quick-actions row to row1's compact control sizing.
  *   v0.5.26 renders Windows and Linux caption controls as CSS traffic lights.
+ *   v0.5.27 normalizes native quick-action hover and active backgrounds.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -982,7 +983,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.26 (compact four-row chrome; Sidebery selected)");
+      logAlways("ready v0.5.27 (normalized four-row chrome; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();
