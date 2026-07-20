@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.22 — native urlbar + resizable synced sidebar
-// @version         0.5.22
+// @description     PLAN.md v0.5.24 — four-row native chrome + resizable synced sidebar
+// @version         0.5.24
 // @author          local
 // ==/UserScript==
 
 /**
  * Layout strategy:
- *   Row1 XUL hbox: lights + account + hamburger + nav + unified + downloads
+ *   Row1 XUL hbox: lights + account + hamburger + forward + back + reload
+ *   Quick row XUL hbox: extensions + downloads + bookmarks + history +
+ *                       logins + developer tools + settings
  *   Row2 XUL hbox: REAL #urlbar-container (identity lock, Places autocomplete,
  *                  star, page actions) — constrained to left chrome width
  *   Row3 XUL hbox: extension toolbar buttons only
@@ -44,6 +46,8 @@
  *            active theme variables while retaining dark fallbacks.
  *   v0.5.22 opens Sidebery on clean profiles after its sidebar command is
  *            registered, without adding a persistent observer or polling loop.
+ *   v0.5.24 adds a native quick-actions row and shifts the original URL and
+ *            extension rows down without changing their internal behavior.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -62,6 +66,16 @@
     pad: 4,
   };
 
+  const QUICK_ACTION_IDS = [
+    "unified-extensions-button",
+    "downloads-button",
+    "bookmarks-menu-button",
+    "history-panelmenu",
+    "logins-button",
+    "developer-button",
+    "preferences-button",
+  ];
+
   const SKIP_IDS = new Set([
     "urlbar-container",
     "back-button",
@@ -72,6 +86,11 @@
     "fxa-toolbar-menu-button",
     "downloads-button",
     "unified-extensions-button",
+    "bookmarks-menu-button",
+    "history-panelmenu",
+    "logins-button",
+    "developer-button",
+    "preferences-button",
     "sidebar-button",
     "vertical-spacer",
   ]);
@@ -286,6 +305,7 @@
       id === "nav-bar-overflow-button" ||
       id === "uc-left-host" ||
       id === "uc-left-row1" ||
+      id === "uc-left-quick-actions" ||
       id === "uc-left-row2" ||
       id === "uc-fake-url";
 
@@ -352,31 +372,22 @@
     }
   }
 
-  /** Make sure downloads exists in this window's nav-bar area. */
-  function ensureDownloadsPlaced() {
-    try {
-      const CUI = win.CustomizableUI;
-      if (!CUI) return;
-      const placement = CUI.getPlacementOfWidget?.("downloads-button");
-      if (!placement || placement.area !== "nav-bar") {
-        try {
-          CUI.addWidgetToArea("downloads-button", "nav-bar");
-        } catch (_) {
-          try {
-            CUI.addWidgetToArea(
-              "downloads-button",
-              CUI.AREA_NAVBAR || "nav-bar"
-            );
-          } catch (e2) {
-            log("add downloads fail", e2);
-          }
-        }
-      }
+  /** Materialize every fixed quick action in this window's nav-bar area. */
+  function ensureQuickActionsPlaced() {
+    const CUI = win.CustomizableUI;
+    if (!CUI) return;
+
+    // Firefox 延迟注册开发者按钮；启动阶段的定时布局会在注册后再次收纳。
+    for (const id of QUICK_ACTION_IDS) {
       try {
-        CUI.ensureWidgetPlacedInWindow?.("downloads-button", win);
-      } catch (_) {}
-    } catch (e) {
-      log("ensureDownloadsPlaced", e);
+        const placement = CUI.getPlacementOfWidget?.(id);
+        if (!placement || placement.area !== "nav-bar") {
+          CUI.addWidgetToArea(id, CUI.AREA_NAVBAR || "nav-bar");
+        }
+        CUI.ensureWidgetPlacedInWindow?.(id, win);
+      } catch (error) {
+        log("place quick action", id, error);
+      }
     }
   }
 
@@ -439,6 +450,11 @@
     "fxa-toolbar-menu-button",
     "downloads-button",
     "unified-extensions-button",
+    "bookmarks-menu-button",
+    "history-panelmenu",
+    "logins-button",
+    "developer-button",
+    "preferences-button",
     "sidebar-button",
     "PanelUI-button",
     "PanelUI-menu-button",
@@ -457,7 +473,7 @@
   ]);
 
   /**
-   * Row3 = XUL hbox (same technique as row1). Moving toolbarbuttons into an
+   * The fourth visual row uses the original row3 XUL hbox. Moving toolbarbuttons into an
    * HTML div breaks hit-testing; XUL→XUL is fine. Pull extension widgets
    * into #uc-left-row3; collapse the empty CUI target.
    */
@@ -772,13 +788,18 @@
       nav.insertBefore(host, nav.firstChild);
     }
 
-    // Row1 / row2 / row3 are all XUL boxes under host (row = hbox).
+    // All four visual rows are XUL boxes under host (row = hbox).
     let row1 = $("uc-left-row1");
+    let quickRow = $("uc-left-quick-actions");
     let row2 = $("uc-left-row2");
     let row3 = $("uc-left-row3");
     if (!row1) {
       row1 = makeBox("uc-left-row1", true);
       host.appendChild(row1);
+    }
+    if (!quickRow) {
+      quickRow = makeBox("uc-left-quick-actions", true);
+      host.appendChild(quickRow);
     }
     if (!row2) {
       row2 = makeBox("uc-left-row2", true);
@@ -805,38 +826,33 @@
       row3 = neu;
     }
 
-    // 2) Row1 — nav chrome only (after overflow restore, so we own these nodes)
-    ensureDownloadsPlaced();
+    // 2) Row1 — window and navigation controls only.
     const r1nodes = [
       findLights(nav),
       findWidgetNode("fxa-toolbar-menu-button"),
       $("PanelUI-button"),
-      $("back-button"),
       $("forward-button"),
+      $("back-button"),
       $("stop-reload-button") || $("reload-button"),
-      findWidgetNode("unified-extensions-button"),
-      findWidgetNode("downloads-button"),
     ];
     for (const n of r1nodes) {
       if (move(row1, n)) {
         resetToolbarGeom(n);
-        if (
-          n.id === "downloads-button" ||
-          n.id === "unified-extensions-button"
-        ) {
-          try {
-            n.removeAttribute("hidden");
-            n.removeAttribute("collapsed");
-            n.hidden = false;
-          } catch (_) {}
-        }
       }
     }
 
-    // 3–4) Row2: REAL native urlbar (identity + autocomplete + star)
+    // 3) Quick row — fixed native actions in the requested order.
+    ensureQuickActionsPlaced();
+    for (const id of QUICK_ACTION_IDS) {
+      const node = findWidgetNode(id);
+      if (!move(quickRow, node)) continue;
+      lightGeom(node);
+    }
+
+    // 4) Original row2: REAL native urlbar (identity + autocomplete + star)
     mountNativeUrlbar(row2);
 
-    // 5) Row3: extension widgets in XUL hbox (hit-test safe)
+    // 5) Original row3: extension widgets in XUL hbox (hit-test safe)
     fillExtRow(row3);
 
     // Hide any leftover overflow button after layout
@@ -964,7 +980,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.22 (Sidebery selected; native launcher suppressed)");
+      logAlways("ready v0.5.24 (four-row chrome; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();

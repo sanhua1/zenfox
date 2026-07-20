@@ -1,8 +1,9 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.22
-   重点：原生 urlbar 进第二行；JS 禁用 popover/top-layer breakout，
+   PLAN.md · 样式 v0.5.24
+   重点：固定操作进入第二行；原生 urlbar 与插件行依次下移，
+         JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
    ========================================================================== */
 
@@ -17,6 +18,7 @@
   --uc-urlbar-top: 32px;
   --uc-row1-height: 26px;
   --uc-icon-size: 24px;
+  --uc-quick-slot: 32px;
   /* 扩展行略高：给篡改猴等右上角红点/角标留空，避免被裁切 */
   --uc-ext-size: 30px;
   --uc-ext-icon: 16px;
@@ -130,7 +132,7 @@
   min-width: var(--uc-left-width) !important;
   max-width: var(--uc-left-width) !important;
   height: auto !important;
-  /* 勿用 min-height: var(--uc-chrome-height)，会在三行下方多出空白条盖住 Sidebery */
+  /* 勿用 min-height: var(--uc-chrome-height)，会在四行下方多出空白条盖住 Sidebery */
   min-height: 0 !important;
   max-height: none !important;
 
@@ -148,7 +150,7 @@
   border-right: 1px solid var(--uc-chrome-border) !important;
   border-bottom: none !important;
 
-  /* 原生 urlbar 已寄放，不再需要 clip 整栏（clip 会裁掉第三行插件图标） */
+  /* 原生 urlbar 已寄放，不再需要 clip 整栏（clip 会裁掉第四行插件图标） */
   overflow: visible !important;
   contain: none !important;
   clip-path: none !important;
@@ -166,7 +168,7 @@
 
 /* 不再依赖原生 urlbar 展开 */
 
-/* ========== 三行宿主（扩展留在 customization-target，保证点击热区=图标） ========== */
+/* ========== 四行宿主 ========== */
 :root:not([customizing]) #uc-left-host {
   display: flex !important;
   flex-direction: column !important;
@@ -217,8 +219,6 @@
 :root:not([customizing]) #uc-left-row1 #PanelUI-button,
 :root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
 :root:not([customizing]) #uc-left-row1 #fxa-toolbar-menu-button,
-:root:not([customizing]) #uc-left-row1 #downloads-button,
-:root:not([customizing]) #uc-left-row1 #unified-extensions-button,
 :root:not([customizing]) #uc-left-row1 #back-button,
 :root:not([customizing]) #uc-left-row1 #forward-button,
 :root:not([customizing]) #uc-left-row1 #stop-reload-button,
@@ -235,16 +235,14 @@
 }
 
 /*
- * Account, navigation, unified extensions, and downloads use equal 24px slots.
+ * Account and navigation controls use equal 24px slots.
  * Their icon centres therefore remain exactly equidistant.
  */
 :root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button,
 :root:not([customizing]) #uc-left-row1 > #PanelUI-button,
 :root:not([customizing]) #uc-left-row1 > #back-button,
 :root:not([customizing]) #uc-left-row1 > #forward-button,
-:root:not([customizing]) #uc-left-row1 > #stop-reload-button,
-:root:not([customizing]) #uc-left-row1 > #unified-extensions-button,
-:root:not([customizing]) #uc-left-row1 > #downloads-button {
+:root:not([customizing]) #uc-left-row1 > #stop-reload-button {
   box-sizing: border-box !important;
   flex: 0 0 24px !important;
   width: 24px !important;
@@ -276,11 +274,60 @@
 }
 
 /*
+ * 行2：固定原生操作，保持用户指定顺序。
+ */
+:root:not([customizing]) #uc-left-quick-actions {
+  order: 2 !important;
+  min-height: var(--uc-quick-slot) !important;
+  height: var(--uc-quick-slot) !important;
+  flex-shrink: 0 !important;
+  gap: 0 !important;
+  overflow: visible !important;
+  background: var(--uc-chrome-bg) !important;
+  -moz-window-dragging: no-drag !important;
+}
+
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem {
+  position: relative !important;
+  box-sizing: border-box !important;
+  flex: 0 0 var(--uc-quick-slot) !important;
+  width: var(--uc-quick-slot) !important;
+  min-width: var(--uc-quick-slot) !important;
+  max-width: var(--uc-quick-slot) !important;
+  height: var(--uc-quick-slot) !important;
+  min-height: var(--uc-quick-slot) !important;
+  max-height: var(--uc-quick-slot) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  align-items: center !important;
+  justify-content: center !important;
+  -moz-box-align: center !important;
+  -moz-box-pack: center !important;
+  --toolbarbutton-inner-padding: 0 !important;
+}
+
+:root:not([customizing]) #uc-left-quick-actions > toolbarbutton > .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-quick-actions > toolbaritem .toolbarbutton-icon {
+  box-sizing: border-box !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/*
  * Firefox's solid native puzzle. Its circular notch is part of the SVG path,
  * not a mask; explicitly clear inherited clipping while keeping that shape.
  */
-:root:not([customizing]) #uc-left-row1 > #unified-extensions-button,
-:root:not([customizing]) #uc-left-row1 > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing]) #uc-left-quick-actions > #unified-extensions-button,
+:root:not([customizing]) #uc-left-quick-actions > #unified-extensions-button > .toolbarbutton-icon {
   list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.svg") !important;
   clip-path: none !important;
   mask: none !important;
@@ -288,7 +335,7 @@
   overflow: visible !important;
 }
 
-:root:not([customizing]) #uc-left-row1 > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing]) #uc-left-quick-actions > #unified-extensions-button > .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: 16px !important;
   height: 16px !important;
@@ -331,9 +378,9 @@
   pointer-events: none !important;
 }
 
-/* 行2：原生 #urlbar-container（证书/站点信息 + Places 联想 + 书签星） */
+/* 行3：原生 #urlbar-container（证书/站点信息 + Places 联想 + 书签星） */
 :root:not([customizing]) #uc-left-row2 {
-  order: 2 !important;
+  order: 3 !important;
   position: relative !important;
   z-index: 40 !important;
   min-height: var(--uc-urlbar-height) !important;
@@ -470,7 +517,7 @@
 }
 
 /*
- * 行3 = XUL #uc-left-row3（与 row1 同手法）
+ * 行4 = XUL #uc-left-row3（保留原 row3 身份，与 row1 同手法）
  * 警告：
  *  - 不要把 toolbarbutton 挪进 HTML div → 图标与点击热区错位
  *  - 不要给 XUL toolbarbutton / badge-stack 设 display:flex → 同样错位
@@ -511,7 +558,7 @@
 
 /* —— 扩展行（XUL hbox）—— */
 :root:not([customizing]) #uc-left-row3 {
-  order: 3 !important;
+  order: 4 !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
@@ -629,7 +676,7 @@
   display: none !important;
 }
 
-/* Firefox AI / AI Window 工具栏入口 — 不是扩展，不进第三行。 */
+/* Firefox AI / AI Window 工具栏入口 — 不是扩展，不进第四行。 */
 :root:not([customizing]) #ai-window-toggle,
 :root:not([customizing]) #ai-window-toggle-button,
 :root:not([customizing]) #smartwindow-ask-button,
