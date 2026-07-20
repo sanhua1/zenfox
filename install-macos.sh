@@ -164,9 +164,9 @@ log "Firefox: $FIREFOX_APP"
 log "Profile: $PROFILE"
 
 if sidebery_installed "$PROFILE"; then
-  log "Sidebery: installed"
+  log "Sidebery extension: installed"
 else
-  log "Sidebery: not installed"
+  log "Sidebery extension: not installed"
   if [[ "$ALLOW_MISSING_SIDEBERY" -ne 1 ]]; then
     if [[ "$CHECK_ONLY" -ne 1 ]]; then open "$SIDEBERY_URL" >/dev/null 2>&1 || true; fi
     die "Install Sidebery from $SIDEBERY_URL, then rerun Zenfox."
@@ -192,6 +192,10 @@ fi
 SOURCE_ROOT=""
 prepare_source
 PAYLOAD="$SOURCE_ROOT/payload"
+[[ -f "$SOURCE_ROOT/VERSION" ]] || die "Zenfox package does not contain VERSION."
+ZENFOX_VERSION=$(tr -d '\r\n' < "$SOURCE_ROOT/VERSION")
+[[ -n "$ZENFOX_VERSION" ]] || die "Zenfox package VERSION is empty."
+log "Zenfox package: v$ZENFOX_VERSION"
 [[ -f "$PAYLOAD/firefox/config.js" ]] || die "Zenfox payload is incomplete."
 
 STAMP=$(date +%Y%m%d-%H%M%S)

@@ -1,7 +1,7 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.27
+   PLAN.md · 样式 v0.5.29
    重点：固定操作进入第二行；原生 urlbar 与插件行依次下移，
          JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
@@ -275,6 +275,77 @@
 }
 
 /*
+ * 行1 的账户、菜单和导航按钮复用行2状态层：外框始终留在 24px 槽位，
+ * 上下各留 1px，使实际半透明背景保持 24×24px。
+ */
+:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button,
+:root:not([customizing]) #uc-left-row1 > #back-button,
+:root:not([customizing]) #uc-left-row1 > #forward-button,
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > #reload-button,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > #stop-button {
+  appearance: none !important;
+  box-sizing: border-box !important;
+  height: var(--uc-row1-height) !important;
+  margin: 0 !important;
+  padding: 1px 0 !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background-color: transparent !important;
+  background-clip: content-box !important;
+  overflow: visible !important;
+}
+
+:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button:not([disabled]):hover,
+:root:not([customizing]) #uc-left-row1 > #back-button:not([disabled]):hover,
+:root:not([customizing]) #uc-left-row1 > #forward-button:not([disabled]):hover,
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button:not([disabled]):hover,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):not([disabled]):hover {
+  background-color: var(--toolbarbutton-background-color-hover) !important;
+}
+
+:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing]) #uc-left-row1 > #back-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing]) #uc-left-row1 > #forward-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):not([disabled]):is(:hover:active, [open], [checked]) {
+  background-color: var(--toolbarbutton-background-color-active) !important;
+}
+
+:root:not([customizing]) #uc-left-row1 > :is(#fxa-toolbar-menu-button, #back-button, #forward-button):focus-visible,
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button:focus-visible,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):focus-visible {
+  outline: var(--focus-outline) !important;
+  outline-offset: -2px !important;
+}
+
+/* 原生内部节点只保留图标和角标，避免再次绘制大尺寸状态背景。 */
+:root:not([customizing]) #uc-left-row1 > :is(#fxa-toolbar-menu-button, #back-button, #forward-button) > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button) > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  outline: none !important;
+}
+
+:root:not([customizing]) #uc-left-row1 > :is(#back-button, #forward-button) > .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button > .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button > .toolbarbutton-badge-stack .toolbarbutton-icon,
+:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button) > .toolbarbutton-icon {
+  box-sizing: border-box !important;
+  width: var(--uc-quick-icon) !important;
+  height: var(--uc-quick-icon) !important;
+  min-width: var(--uc-quick-icon) !important;
+  min-height: var(--uc-quick-icon) !important;
+  max-width: var(--uc-quick-icon) !important;
+  max-height: var(--uc-quick-icon) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/*
  * 行2：固定原生操作，保持用户指定顺序。
  */
 :root:not([customizing]) #uc-left-quick-actions {
@@ -285,7 +356,7 @@
   gap: 0 !important;
   overflow: visible !important;
   background: var(--uc-chrome-bg) !important;
-  -moz-window-dragging: no-drag !important;
+  -moz-window-dragging: drag !important;
 }
 
 :root:not([customizing]) #uc-left-quick-actions > toolbaritem {

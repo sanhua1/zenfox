@@ -260,17 +260,17 @@ try {
 
     $sidebery = Get-SideberyStatus $profile
     if ($sidebery.Installed -and -not $sidebery.StateKnown) {
-        Write-Zenfox 'Sidebery: installed (activation state unavailable; continuing)'
+        Write-Zenfox 'Sidebery extension: installed (activation state unavailable; continuing)'
     } elseif ($sidebery.Installed -and $sidebery.Active) {
-        Write-Zenfox "Sidebery: installed and active (v$($sidebery.Version))"
+        Write-Zenfox "Sidebery extension: installed and active (v$($sidebery.Version))"
     } elseif ($sidebery.Installed) {
-        Write-Zenfox "Sidebery: installed but disabled (v$($sidebery.Version))"
+        Write-Zenfox "Sidebery extension: installed but disabled (v$($sidebery.Version))"
         if (-not $AllowMissingSidebery) {
             if (-not $CheckOnly) { Start-Process $firefox.Exe -ArgumentList 'about:addons' }
             Stop-Zenfox 'Enable Sidebery, then rerun Zenfox.'
         }
     } else {
-        Write-Zenfox 'Sidebery: not installed'
+        Write-Zenfox 'Sidebery extension: not installed'
         if (-not $AllowMissingSidebery) {
             if (-not $CheckOnly) { Start-Process $SideberyUrl }
             Stop-Zenfox "Install Sidebery from $SideberyUrl, then rerun Zenfox."
@@ -296,6 +296,11 @@ try {
 
     $sourceRoot = Get-SourceRoot
     $payload = Join-Path $sourceRoot 'payload'
+    $versionFile = Join-Path $sourceRoot 'VERSION'
+    if (-not (Test-Path $versionFile)) { Stop-Zenfox 'Zenfox package does not contain VERSION.' }
+    $zenfoxVersion = (Get-Content -LiteralPath $versionFile -Raw -Encoding UTF8).Trim()
+    if (-not $zenfoxVersion) { Stop-Zenfox 'Zenfox package VERSION is empty.' }
+    Write-Zenfox "Zenfox package: v$zenfoxVersion"
     if (-not (Test-Path (Join-Path $payload 'firefox\config.js'))) { Stop-Zenfox 'Zenfox payload is incomplete.' }
 
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
