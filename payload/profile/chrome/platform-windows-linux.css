@@ -2,8 +2,8 @@
  * Zenfox native window controls for Windows and Linux.
  *
  * LeftChrome moves Firefox's native caption-button box into row 1. These
- * platform-only rules keep the original commands, but make their layout
- * compact and use the requested macOS-like order.
+ * platform-only rules keep the original commands, but render compact
+ * macOS-like traffic lights in the requested order.
  */
 
 @media (-moz-platform: windows), (-moz-platform: linux) {
@@ -32,6 +32,8 @@
   }
 
   :root:not([customizing]) #uc-left-row1 .titlebar-button {
+    appearance: none !important;
+    position: relative !important;
     box-sizing: border-box !important;
     flex: 0 0 20px !important;
     width: 20px !important;
@@ -42,19 +44,63 @@
     max-height: var(--uc-row1-height) !important;
     margin: 0 !important;
     padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    list-style-image: none !important;
+    background: radial-gradient(
+      circle at center,
+      var(--uc-traffic-light) 0 5px,
+      var(--uc-traffic-border) 5.5px 6px,
+      transparent 6.5px
+    ) !important;
+  }
+
+  /* 隐藏平台原生符号，保留完整按钮热区。 */
+  :root:not([customizing]) #uc-left-row1 .titlebar-button > .toolbarbutton-icon {
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* 悬停时在圆点中央显示 macOS 风格操作符号。 */
+  :root:not([customizing]) #uc-left-row1 .titlebar-button::before {
+    content: var(--uc-traffic-symbol, "") !important;
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: transparent !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+  }
+
+  :root:not([customizing]) #uc-left-row1 .titlebar-button:hover::before {
+    color: rgba(40, 32, 28, 0.82) !important;
   }
 
   /* Requested left-to-right order: close, minimize, maximize/restore. */
   :root:not([customizing]) #uc-left-row1 .titlebar-close {
     order: 1 !important;
+    --uc-traffic-light: #ff5f57;
+    --uc-traffic-border: #e0443e;
+    --uc-traffic-symbol: "×";
   }
 
   :root:not([customizing]) #uc-left-row1 .titlebar-min {
     order: 2 !important;
+    --uc-traffic-light: #febc2e;
+    --uc-traffic-border: #d89b24;
+    --uc-traffic-symbol: "−";
   }
 
   :root:not([customizing]) #uc-left-row1 .titlebar-max,
   :root:not([customizing]) #uc-left-row1 .titlebar-restore {
     order: 3 !important;
+    --uc-traffic-light: #28c840;
+    --uc-traffic-border: #1da734;
+    --uc-traffic-symbol: "+";
   }
 }

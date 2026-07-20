@@ -1,7 +1,7 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.24
+   PLAN.md · 样式 v0.5.26
    重点：固定操作进入第二行；原生 urlbar 与插件行依次下移，
          JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
@@ -18,7 +18,8 @@
   --uc-urlbar-top: 32px;
   --uc-row1-height: 26px;
   --uc-icon-size: 24px;
-  --uc-quick-slot: 32px;
+  --uc-quick-slot: 24px;
+  --uc-quick-icon: 16px;
   /* 扩展行略高：给篡改猴等右上角红点/角标留空，避免被裁切 */
   --uc-ext-size: 30px;
   --uc-ext-icon: 16px;
@@ -278,8 +279,8 @@
  */
 :root:not([customizing]) #uc-left-quick-actions {
   order: 2 !important;
-  min-height: var(--uc-quick-slot) !important;
-  height: var(--uc-quick-slot) !important;
+  min-height: var(--uc-row1-height) !important;
+  height: var(--uc-row1-height) !important;
   flex-shrink: 0 !important;
   gap: 0 !important;
   overflow: visible !important;
@@ -295,9 +296,9 @@
   width: var(--uc-quick-slot) !important;
   min-width: var(--uc-quick-slot) !important;
   max-width: var(--uc-quick-slot) !important;
-  height: var(--uc-quick-slot) !important;
-  min-height: var(--uc-quick-slot) !important;
-  max-height: var(--uc-quick-slot) !important;
+  height: var(--uc-row1-height) !important;
+  min-height: var(--uc-row1-height) !important;
+  max-height: var(--uc-row1-height) !important;
   margin: 0 !important;
   padding: 0 !important;
   opacity: 1 !important;
@@ -312,12 +313,12 @@
 :root:not([customizing]) #uc-left-quick-actions > toolbarbutton > .toolbarbutton-icon,
 :root:not([customizing]) #uc-left-quick-actions > toolbaritem .toolbarbutton-icon {
   box-sizing: border-box !important;
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  min-height: 18px !important;
-  max-width: 18px !important;
-  max-height: 18px !important;
+  width: var(--uc-quick-icon) !important;
+  height: var(--uc-quick-icon) !important;
+  min-width: var(--uc-quick-icon) !important;
+  min-height: var(--uc-quick-icon) !important;
+  max-width: var(--uc-quick-icon) !important;
+  max-height: var(--uc-quick-icon) !important;
   margin: 0 !important;
   padding: 0 !important;
 }
