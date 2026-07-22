@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.30 — configurable native quick actions
-// @version         0.5.30
+// @description     PLAN.md v0.5.31 — configurable native quick actions
+// @version         0.5.31
 // @author          local
 // ==/UserScript==
 
 /**
  * Layout strategy:
- *   Row1 XUL hbox: lights + account + hamburger + forward + back + reload
+ *   Row1 XUL hbox: lights + account + hamburger + back + forward + reload
  *   Quick row XUL hbox: extensions + downloads + bookmarks + history +
  *                       logins + developer tools + settings
  *   Row2 XUL hbox: REAL #urlbar-container (identity lock, Places autocomplete,
@@ -54,6 +54,7 @@
  *   v0.5.28 applies the same bounded state layer to row1 controls.
  *   v0.5.29 lets blank space in the quick-actions row drag the window.
  *   v0.5.30 adds a persisted, sortable settings panel for native quick actions.
+ *   v0.5.31 supports fresh Sidebery defaults and restores back/forward order.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -660,10 +661,9 @@
   async function readSideberyAppearance() {
     const storage = await getSideberyStorage();
     const stored = await storage.get(["settings", "sidebarCSS"]);
-    const settings = stored?.settings;
-    if (!settings || typeof settings !== "object") {
-      throw new Error("Sidebery settings are missing");
-    }
+    // 全新 Sidebery 会在内存中使用默认值，不一定立即创建 settings 键。
+    const settings =
+      stored?.settings && typeof stored.settings === "object" ? stored.settings : {};
     const sidebarCSS = typeof stored.sidebarCSS === "string" ? stored.sidebarCSS : "";
     const activeForeground = getSideberyCssRule(
       sidebarCSS,
@@ -716,7 +716,7 @@
   }
 
   /**
-   * 合并写回两个外观字段
+   * 合并写回 ZenFox 支持的外观字段
    * 第一次修改前保存原值，Sidebery 的其他配置保持不变
    */
   async function saveSideberyAppearance(appearance) {
@@ -729,17 +729,20 @@
 
     const storage = await getSideberyStorage();
     const stored = await storage.get(["settings", "sidebarCSS"]);
-    const settings = stored?.settings;
-    if (!settings || typeof settings !== "object") {
-      throw new Error("Sidebery settings are missing");
-    }
+    // settings 缺失是 Sidebery 全新 Profile 的合法状态，首次应用时增量创建。
+    const settings =
+      stored?.settings && typeof stored.settings === "object" ? stored.settings : {};
 
     if (!ServicesApi?.prefs?.prefHasUserValue(PREF_SIDEBERY_APPEARANCE_BACKUP)) {
       ServicesApi?.prefs?.setStringPref(
         PREF_SIDEBERY_APPEARANCE_BACKUP,
         JSON.stringify({
-          fontSize: settings.fontSize,
-          density: settings.density,
+          fontSize: SIDEBERY_FONT_SIZES.includes(settings.fontSize)
+            ? settings.fontSize
+            : "m",
+          density: SIDEBERY_DENSITIES.includes(settings.density)
+            ? settings.density
+            : "default",
           version: storage.extension.manifest?.version || "unknown",
         })
       );
@@ -1787,8 +1790,8 @@
       findLights(nav),
       findWidgetNode("fxa-toolbar-menu-button"),
       $("PanelUI-button"),
-      $("forward-button"),
       $("back-button"),
+      $("forward-button"),
       $("stop-reload-button") || $("reload-button"),
     ];
     for (const n of r1nodes) {
@@ -1949,7 +1952,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.30 (localized quick-action settings; Sidebery selected)");
+      logAlways("ready v0.5.31 (fresh-profile Sidebery settings; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();

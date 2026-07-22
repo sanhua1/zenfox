@@ -1,7 +1,7 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.30
+   PLAN.md · 样式 v0.5.31
    重点：固定操作进入第二行；原生 urlbar 与插件行依次下移，
          JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。

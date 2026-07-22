@@ -68,6 +68,8 @@ The settings interface follows Firefox's application language: Chinese locales u
 
 The **Appearance** tab reads and updates Sidebery's `fontSize`, `density`, `--tabs-activated-fg`, and `--tabs-activated-bg` values. Zenfox changes only these allowlisted values, keeps the rest of Sidebery's settings and custom CSS intact, and saves their original values before the first write.
 
+Fresh or Firefox Sync-installed Sidebery profiles are supported even before Sidebery has persisted its default `settings` object.
+
 ## Detection only
 
 From a cloned repository, check prerequisites without writing files:

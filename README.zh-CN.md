@@ -72,6 +72,8 @@ Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Fla
 
 **外观设置** 标签会读写 Sidebery 的 `fontSize`、`density`、`--tabs-activated-fg` 和 `--tabs-activated-bg`。Zenfox 只修改这些允许值，保留 Sidebery 其余设置和自定义 CSS，并在第一次写入前保存原值。
 
+全新安装或由 Firefox 同步安装的 Sidebery 即使尚未落盘默认 `settings` 对象，也能正常读取和配置。
+
 ## 仅检测环境
 
 从克隆到本地的仓库中，可以只检查前提条件，不写入任何文件：
