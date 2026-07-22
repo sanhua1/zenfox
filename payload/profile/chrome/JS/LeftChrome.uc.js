@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.31 — configurable native quick actions
-// @version         0.5.31
+// @description     PLAN.md v0.5.32 — tab-based ZenFox settings
+// @version         0.5.32
 // @author          local
 // ==/UserScript==
 
@@ -55,6 +55,7 @@
  *   v0.5.29 lets blank space in the quick-actions row drag the window.
  *   v0.5.30 adds a persisted, sortable settings panel for native quick actions.
  *   v0.5.31 supports fresh Sidebery defaults and restores back/forward order.
+ *   v0.5.32 opens ZenFox settings in a dedicated privileged browser tab.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -70,6 +71,7 @@
   const PREF_QUICK_ACTIONS = "zenfox.quickActions.v1";
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
+  const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
     if (typeof Services !== "undefined") return Services;
@@ -1358,6 +1360,79 @@
       });
   }
 
+  /**
+   * 向独立设置页提供受控的数据接口
+   * 保存后刷新所有已打开的 Firefox 窗口
+   */
+  function registerSettingsPageApi() {
+    if (win.ZenFoxSettings) return;
+
+    win.ZenFoxSettings = Object.freeze({
+      async read() {
+        let appearance = null;
+        let appearanceError = "";
+        try {
+          appearance = await readSideberyAppearance();
+        } catch (error) {
+          appearanceError = String(error?.message || error);
+        }
+        return JSON.stringify({
+          candidates: collectQuickActionCandidates(),
+          enabledIds: readQuickActionIds(),
+          appearance,
+          appearanceError,
+        });
+      },
+
+      async apply(payload) {
+        const { enabledIds, appearance } = JSON.parse(String(payload || "{}"));
+        const ids = Array.from(
+          new Set(
+            (Array.isArray(enabledIds) ? enabledIds : []).filter(
+              (id) =>
+                typeof id === "string" &&
+                /^[A-Za-z0-9_{}@.+-]+$/.test(id) &&
+                !QUICK_ACTION_EXCLUDED_IDS.has(id) &&
+                !/-browser-action$/i.test(id)
+            )
+          )
+        );
+        if (appearance) await saveSideberyAppearance(appearance);
+        saveQuickActionIds(ids);
+
+        const windows = ServicesApi?.wm?.getEnumerator("navigator:browser");
+        while (windows?.hasMoreElements()) {
+          windows.getNext()?.ZenFoxSettings?.refresh?.();
+        }
+      },
+
+      refresh() {
+        layout("settings-page");
+      },
+    });
+  }
+
+  /** 打开已有设置标签，未打开时创建受信任标签。 */
+  function openSettingsPage() {
+    const browser = win.gBrowser;
+    if (!browser) return;
+
+    const existing = Array.from(browser.tabs || []).find(
+      (tab) => tab.linkedBrowser?.currentURI?.spec === SETTINGS_URL
+    );
+    if (existing) {
+      browser.selectedTab = existing;
+      return;
+    }
+
+    const tab = browser.addTrustedTab
+      ? browser.addTrustedTab(SETTINGS_URL)
+      : browser.addTab(SETTINGS_URL, {
+          triggeringPrincipal: ServicesApi?.scriptSecurityManager?.getSystemPrincipal(),
+        });
+    browser.selectedTab = tab;
+  }
+
   /** Add the ZenFox entry to Firefox's native toolbar context menu. */
   function ensureSettingsMenu() {
     const menu = $("toolbar-context-menu");
@@ -1368,7 +1443,7 @@
     const item = doc.createXULElement("menuitem");
     item.id = "uc-zenfox-settings-menuitem";
     item.setAttribute("label", TEXT.settings);
-    item.addEventListener("command", openQuickActionSettings);
+    item.addEventListener("command", openSettingsPage);
 
     const anchor = $("toolbar-context-customize");
     menu.insertBefore(separator, anchor || null);
@@ -1945,6 +2020,7 @@
 
     root.setAttribute("uc-left-chrome", "init");
     setWidth(CFG.defaultWidth);
+    registerSettingsPageApi();
 
     const boot = () => {
       layout("boot");
@@ -1952,7 +2028,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.31 (fresh-profile Sidebery settings; Sidebery selected)");
+      logAlways("ready v0.5.32 (tab-based ZenFox settings; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();

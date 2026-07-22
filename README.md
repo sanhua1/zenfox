@@ -60,7 +60,7 @@ On browser launch, Zenfox disables Firefox's separate native sidebar launcher an
 
 ## ZenFox settings
 
-Right-click the upper-left Zenfox area and choose **ZenFox Settings**. The settings panel can add, hide, and sort Firefox's native single-button widgets in the second row. It supports drag-and-drop, move up/down controls, and restoring the default layout. The first and fourth rows are not affected.
+Right-click the upper-left Zenfox area and choose **ZenFox Settings**. Firefox opens a dedicated settings tab where you can add, hide, and sort its native single-button widgets in the second row. It supports drag-and-drop, move up/down controls, and restoring the default layout. The first and fourth rows are not affected.
 
 The ordered layout is stored in the Firefox preference `zenfox.quickActions.v1` and survives browser restarts. Extension actions, the URL bar, flexible spaces, and combined widgets are excluded from the candidate list.
 
@@ -99,6 +99,7 @@ Firefox Profile
     ├── platform-windows-linux.css   # compact native window controls
     ├── sidebery-companion.css      # optional; paste into Sidebery styles
     ├── JS/LeftChrome.uc.js
+    ├── settings/                   # dedicated ZenFox settings tab
     └── utils/                      # fx-autoconfig runtime
 ```
 
@@ -111,6 +112,7 @@ Run the same one-line install command again to update or repair Zenfox. Every ru
 For maintainers:
 
 - Shared UI changes belong in `payload/profile/chrome/userChrome.css` and `payload/profile/chrome/JS/LeftChrome.uc.js`; Windows/Linux window-control geometry lives in `payload/profile/chrome/platform-windows-linux.css`.
+- The dedicated settings page lives in `payload/profile/chrome/settings/`.
 - fx-autoconfig runtime updates belong in `payload/profile/chrome/utils/` and `payload/firefox/`.
 - Installer behavior is maintained in the three platform scripts.
 - Update `VERSION` whenever publishing a new Zenfox release.

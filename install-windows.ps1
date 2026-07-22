@@ -321,16 +321,20 @@ try {
     }
     $existingUtils = Join-Path $profile 'chrome\utils'
     if (Test-Path $existingUtils) { Copy-Item $existingUtils (Join-Path $backup 'profile\chrome\utils') -Recurse -Force }
+    $existingSettings = Join-Path $profile 'chrome\settings'
+    if (Test-Path $existingSettings) { Copy-Item $existingSettings (Join-Path $backup 'profile\chrome\settings') -Recurse -Force }
 
     Install-ProgramPayload $payload $firefox.Root
 
     $chrome = Join-Path $profile 'chrome'
     New-Item -ItemType Directory -Path (Join-Path $chrome 'JS') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $chrome 'utils') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $chrome 'settings') -Force | Out-Null
     Copy-Item (Join-Path $payload 'profile\chrome\userChrome.css') (Join-Path $chrome 'userChrome.css') -Force
     Copy-Item (Join-Path $payload 'profile\chrome\platform-windows-linux.css') (Join-Path $chrome 'platform-windows-linux.css') -Force
     Copy-Item (Join-Path $payload 'profile\chrome\JS\LeftChrome.uc.js') (Join-Path $chrome 'JS\LeftChrome.uc.js') -Force
     Copy-Item (Join-Path $payload 'profile\chrome\utils\*') (Join-Path $chrome 'utils') -Recurse -Force
+    Copy-Item (Join-Path $payload 'profile\chrome\settings\*') (Join-Path $chrome 'settings') -Recurse -Force
     Copy-Item (Join-Path $payload 'profile\chrome\sidebery-companion.css') (Join-Path $chrome 'sidebery-companion.css') -Force
 
     $userJs = Join-Path $profile 'user.js'

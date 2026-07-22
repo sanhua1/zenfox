@@ -206,15 +206,17 @@ mkdir -p "$BACKUP/profile/chrome/JS" "$BACKUP/profile/chrome" "$BACKUP/firefox/d
 [[ -f "$PROFILE/chrome/platform-windows-linux.css" ]] && cp -p "$PROFILE/chrome/platform-windows-linux.css" "$BACKUP/profile/chrome/platform-windows-linux.css"
 [[ -f "$PROFILE/chrome/JS/LeftChrome.uc.js" ]] && cp -p "$PROFILE/chrome/JS/LeftChrome.uc.js" "$BACKUP/profile/chrome/JS/LeftChrome.uc.js"
 [[ -d "$PROFILE/chrome/utils" ]] && cp -R "$PROFILE/chrome/utils" "$BACKUP/profile/chrome/utils"
+[[ -d "$PROFILE/chrome/settings" ]] && cp -R "$PROFILE/chrome/settings" "$BACKUP/profile/chrome/settings"
 [[ -f "$PROFILE/user.js" ]] && cp -p "$PROFILE/user.js" "$BACKUP/profile/user.js"
 [[ -f "$FIREFOX_ROOT/config.js" ]] && cp -p "$FIREFOX_ROOT/config.js" "$BACKUP/firefox/config.js"
 [[ -f "$FIREFOX_ROOT/defaults/pref/config-prefs.js" ]] && cp -p "$FIREFOX_ROOT/defaults/pref/config-prefs.js" "$BACKUP/firefox/defaults/pref/config-prefs.js"
 
-mkdir -p "$PROFILE/chrome/JS" "$PROFILE/chrome/utils"
+mkdir -p "$PROFILE/chrome/JS" "$PROFILE/chrome/utils" "$PROFILE/chrome/settings"
 cp -p "$PAYLOAD/profile/chrome/userChrome.css" "$PROFILE/chrome/userChrome.css"
 cp -p "$PAYLOAD/profile/chrome/platform-windows-linux.css" "$PROFILE/chrome/platform-windows-linux.css"
 cp -p "$PAYLOAD/profile/chrome/JS/LeftChrome.uc.js" "$PROFILE/chrome/JS/LeftChrome.uc.js"
 cp -R "$PAYLOAD/profile/chrome/utils/." "$PROFILE/chrome/utils/"
+cp -R "$PAYLOAD/profile/chrome/settings/." "$PROFILE/chrome/settings/"
 cp -p "$PAYLOAD/profile/chrome/sidebery-companion.css" "$PROFILE/chrome/sidebery-companion.css"
 
 USER_JS="$PROFILE/user.js"

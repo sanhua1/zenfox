@@ -64,7 +64,7 @@ Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Fla
 
 ## ZenFox 设置
 
-在 Zenfox 左上角区域右键，选择 **ZenFox 设置**。设置面板可以添加、隐藏和排序第二行中的 Firefox 原生单按钮；支持拖拽、上移、下移，并可恢复默认布局。第一行和第四行不受该设置影响。
+在 Zenfox 左上角区域右键，选择 **ZenFox 设置**。Firefox 会打开独立设置标签页。设置页可以添加、隐藏和排序第二行中的 Firefox 原生单按钮；支持拖拽、上移、下移，并可恢复默认布局。第一行和第四行不受该设置影响。
 
 配置保存在 Firefox 首选项 `zenfox.quickActions.v1` 中，重启浏览器后仍然有效。扩展按钮、地址栏、弹性空白和组合控件不会出现在候选列表中。
 
@@ -103,6 +103,7 @@ Firefox Profile
     ├── platform-windows-linux.css   # Windows/Linux 紧凑窗口按钮
     ├── sidebery-companion.css      # 可选：粘贴到 Sidebery 样式编辑器
     ├── JS/LeftChrome.uc.js
+    ├── settings/                   # ZenFox 独立设置标签页
     └── utils/                      # fx-autoconfig 运行组件
 ```
 
@@ -116,6 +117,7 @@ Firefox 更新可能覆盖程序目录里的两个启动文件。重新运行安
 
 - 通用 UI 样式更新放在 `payload/profile/chrome/userChrome.css`，Windows/Linux 窗口按钮布局放在 `payload/profile/chrome/platform-windows-linux.css`。
 - 浏览器结构与行为更新放在 `payload/profile/chrome/JS/LeftChrome.uc.js`。
+- 设置标签页放在 `payload/profile/chrome/settings/`。
 - fx-autoconfig 更新放在 `payload/profile/chrome/utils/` 和 `payload/firefox/`。
 - 安装行为分别由三个平台的安装脚本维护。
 - 发布新的 Zenfox 版本时同步更新 `VERSION`。

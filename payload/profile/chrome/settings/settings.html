@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZenFox Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+    <script src="settings.js" defer></script>
+  </head>
+  <body>
+    <main class="settings-page">
+      <header class="page-header">
+        <div>
+          <h1 id="page-title">ZenFox Settings</h1>
+          <p id="page-subtitle"></p>
+        </div>
+      </header>
+
+      <nav class="settings-tabs" role="tablist" aria-label="Settings">
+        <button type="button" data-settings-tab="quick-actions" role="tab"></button>
+        <button type="button" data-settings-tab="appearance" role="tab"></button>
+      </nav>
+
+      <section class="settings-card" data-settings-view="quick-actions">
+        <div class="quick-actions-grid">
+          <section>
+            <h2 id="enabled-title"></h2>
+            <div id="enabled-actions" class="settings-list"></div>
+          </section>
+          <section>
+            <h2 id="available-title"></h2>
+            <div id="available-actions" class="settings-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="settings-card appearance-view" data-settings-view="appearance" hidden>
+        <h2>Sidebery</h2>
+        <div id="font-size-row" class="appearance-row"></div>
+        <div id="density-row" class="appearance-row"></div>
+        <div id="foreground-row" class="appearance-row"></div>
+        <div id="background-row" class="appearance-row"></div>
+        <p id="sidebery-status" class="status-text"></p>
+      </section>
+
+      <footer class="page-footer">
+        <button type="button" id="reset-button"></button>
+        <span id="save-status" class="status-text" role="status"></span>
+        <button type="button" id="apply-button" class="primary"></button>
+      </footer>
+    </main>
+  </body>
+</html>
