@@ -60,9 +60,9 @@ On browser launch, Zenfox disables Firefox's separate native sidebar launcher an
 
 ## ZenFox settings
 
-Right-click the upper-left Zenfox area and choose **ZenFox Settings**. Firefox opens a dedicated settings tab where you can add, hide, and sort its native single-button widgets in the second row. It supports drag-and-drop, move up/down controls, and restoring the default layout. The first and fourth rows are not affected.
+Right-click the upper-left Zenfox area and choose **ZenFox Settings**. Firefox opens a dedicated settings tab. The window-control group stays fixed at the far left of the first row; all other native actions can be dragged, sorted, and hidden across the first two rows. The URL bar and extension row are not affected.
 
-The ordered layout is stored in the Firefox preference `zenfox.quickActions.v1` and survives browser restarts. Extension actions, the URL bar, flexible spaces, and combined widgets are excluded from the candidate list.
+The two-row layout is stored in the Firefox preference `zenfox.toolbarRows.v1` and survives browser restarts. On first upgrade, Zenfox keeps the previous `zenfox.quickActions.v1` second-row layout. Extension actions, the URL bar, and flexible spaces are excluded from the candidate list.
 
 The settings interface follows Firefox's application language: Chinese locales use Chinese, while all other locales use English.
 

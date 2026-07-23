@@ -109,7 +109,7 @@ button.primary,
 
 .quick-actions-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
 
@@ -139,11 +139,24 @@ button.primary,
 }
 
 .row-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: color-mix(in srgb, currentColor 54%, transparent);
   cursor: grab;
   font-weight: 700;
   text-align: center;
   user-select: none;
+}
+
+.row-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  pointer-events: none;
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+  fill-opacity: 1;
 }
 
 .row-text {
@@ -225,6 +238,49 @@ button.primary,
   background: color-mix(in srgb, currentColor 6%, transparent);
 }
 
+.color-controls .switch-control {
+  appearance: none;
+  flex: 0 0 50px;
+  width: 50px;
+  min-width: 50px;
+  height: 28px;
+  min-height: 28px;
+  padding: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.color-controls .switch-control::after {
+  content: "";
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 88%, Canvas);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.36);
+  transform: translateX(0);
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.color-controls .switch-control.selected {
+  border-color: AccentColor;
+  background: AccentColor;
+}
+
+.color-controls .switch-control.selected::after {
+  background: AccentColorText;
+  transform: translateX(22px);
+}
+
+.color-controls .switch-control:not(:disabled):hover {
+  background: color-mix(in srgb, currentColor 26%, transparent);
+}
+
+.color-controls .switch-control.selected:not(:disabled):hover {
+  background: color-mix(in srgb, AccentColor 84%, currentColor);
+}
+
 .status-text {
   min-height: 18px;
   color: color-mix(in srgb, currentColor 62%, transparent);
@@ -263,5 +319,11 @@ button.primary,
 
   .color-controls {
     width: 100%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
   }
 }

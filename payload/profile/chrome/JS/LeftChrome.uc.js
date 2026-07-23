@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.34 — reusable tab-based ZenFox settings
-// @version         0.5.34
+// @description     PLAN.md v0.5.39 — guarded toolbar context menu
+// @version         0.5.39
 // @author          local
 // ==/UserScript==
 
@@ -58,6 +58,11 @@
  *   v0.5.32 opens ZenFox settings in a dedicated privileged browser tab.
  *   v0.5.33 bridges the settings tab through browser chrome without page privileges.
  *   v0.5.34 keeps the settings tab reusable and restores missing page state.
+ *   v0.5.35 prevents the sidebar from becoming narrower than its first two rows.
+ *   v0.5.36 allows all non-window-control actions to move between the first two rows.
+ *   v0.5.37 shows each native action's real icon in the settings page.
+ *   v0.5.38 closes stale settings tabs before opening a fresh one.
+ *   v0.5.39 hides Firefox's toolbar customization entry to prevent misclicks.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -71,6 +76,7 @@
   const $ = (id) => doc.getElementById(id);
   const SIDEBERY_ID = "{3c078156-979c-498b-8990-85f7987dd929}";
   const PREF_QUICK_ACTIONS = "zenfox.quickActions.v1";
+  const PREF_TOOLBAR_ROWS = "zenfox.toolbarRows.v1";
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
@@ -98,9 +104,9 @@
   const TEXT = IS_ZH
     ? {
         settings: "ZenFox 设置",
-        quickActions: "第二行按钮",
+        quickActions: "按钮布局",
         appearance: "外观设置",
-        subtitle: "配置第二行按钮和 Sidebery 外观。",
+        subtitle: "配置前两行按钮和 Sidebery 外观。",
         enabled: "已显示",
         available: "可添加",
         dragSort: "拖拽排序",
@@ -131,9 +137,9 @@
       }
     : {
         settings: "ZenFox Settings",
-        quickActions: "Quick Actions",
+        quickActions: "Button Layout",
         appearance: "Appearance",
-        subtitle: "Configure second-row buttons and Sidebery appearance.",
+        subtitle: "Configure the first two button rows and Sidebery appearance.",
         enabled: "Shown",
         available: "Available",
         dragSort: "Drag to reorder",
@@ -185,7 +191,16 @@
     "preferences-button",
   ];
 
+  const DEFAULT_ROW1_ACTION_IDS = [
+    "fxa-toolbar-menu-button",
+    "PanelUI-button",
+    "back-button",
+    "forward-button",
+    "stop-reload-button",
+  ];
+
   const KNOWN_NATIVE_QUICK_ACTION_IDS = [
+    ...DEFAULT_ROW1_ACTION_IDS,
     ...DEFAULT_QUICK_ACTION_IDS,
     "save-page-button",
     "print-button",
@@ -203,6 +218,11 @@
 
   const QUICK_ACTION_LABELS = IS_ZH
     ? {
+        "fxa-toolbar-menu-button": "Firefox 账户",
+        "PanelUI-button": "Firefox 菜单",
+        "back-button": "后退",
+        "forward-button": "前进",
+        "stop-reload-button": "刷新",
         "unified-extensions-button": "扩展",
         "downloads-button": "下载",
         "bookmarks-menu-button": "书签",
@@ -224,6 +244,11 @@
         "tab-groups-button": "标签页组",
       }
     : {
+        "fxa-toolbar-menu-button": "Firefox Account",
+        "PanelUI-button": "Firefox Menu",
+        "back-button": "Back",
+        "forward-button": "Forward",
+        "stop-reload-button": "Reload",
         "unified-extensions-button": "Extensions",
         "downloads-button": "Downloads",
         "bookmarks-menu-button": "Bookmarks",
@@ -247,13 +272,8 @@
 
   const QUICK_ACTION_EXCLUDED_IDS = new Set([
     "urlbar-container",
-    "back-button",
-    "forward-button",
-    "stop-reload-button",
     "reload-button",
     "stop-button",
-    "fxa-toolbar-menu-button",
-    "PanelUI-button",
     "PanelUI-menu-button",
     "sidebar-button",
     "vertical-spacer",
@@ -330,6 +350,51 @@
     const m = measureSidebar();
     if (m) setWidth(m);
     else if (!root.style.getPropertyValue("--uc-left-width")) setWidth(CFG.defaultWidth);
+  }
+
+  /** 计算单行所有可见子项及间距占用的总宽度。 */
+  function measureRowContentWidth(row) {
+    if (!row) return 0;
+    const rowStyle = win.getComputedStyle(row);
+    const gap = parseFloat(rowStyle.columnGap || rowStyle.gap) || 0;
+    const children = Array.from(row.children).filter((child) => {
+      const style = win.getComputedStyle(child);
+      const rect = child.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "collapse" && rect.width > 0;
+    });
+
+    const childrenWidth = children.reduce((total, child) => {
+      const style = win.getComputedStyle(child);
+      const rect = child.getBoundingClientRect();
+      const marginStart = parseFloat(style.marginInlineStart || style.marginLeft) || 0;
+      const marginEnd = parseFloat(style.marginInlineEnd || style.marginRight) || 0;
+      return total + rect.width + marginStart + marginEnd;
+    }, 0);
+    return Math.ceil(childrenWidth + Math.max(0, children.length - 1) * gap);
+  }
+
+  /**
+   * 用前两行较大的内容宽度约束 Firefox 原生侧栏分隔条
+   * 导航栏内边距计入侧边栏 border-box 最小宽度
+   */
+  function updateSidebarMinWidth() {
+    const nav = $("nav-bar");
+    const sidebar = $("sidebar-box");
+    const row1 = $("uc-left-row1");
+    const quickRow = $("uc-left-quick-actions");
+    if (!nav || !sidebar || !row1 || !quickRow) return;
+
+    const navStyle = win.getComputedStyle(nav);
+    const paddingStart = parseFloat(navStyle.paddingInlineStart || navStyle.paddingLeft) || 0;
+    const paddingEnd = parseFloat(navStyle.paddingInlineEnd || navStyle.paddingRight) || 0;
+    const contentWidth = Math.max(
+      measureRowContentWidth(row1),
+      measureRowContentWidth(quickRow)
+    );
+    const minimumWidth = Math.ceil(contentWidth + paddingStart + paddingEnd);
+    if (minimumWidth > 0) {
+      root.style.setProperty("--uc-sidebar-min-width", `${minimumWidth}px`);
+    }
   }
 
   function measureChromeHeight() {
@@ -596,6 +661,56 @@
     );
   }
 
+  /** 过滤可持久化的按钮 ID，并保持原有顺序。 */
+  function sanitizeToolbarActionIds(ids) {
+    return Array.from(
+      new Set(
+        (Array.isArray(ids) ? ids : []).filter(
+          (id) =>
+            typeof id === "string" &&
+            /^[A-Za-z0-9_{}@.+-]+$/.test(id) &&
+            !QUICK_ACTION_EXCLUDED_IDS.has(id) &&
+            !/-browser-action$/i.test(id)
+        )
+      )
+    );
+  }
+
+  /** 读取双行配置；首次升级时沿用原第二行配置。 */
+  function readToolbarRows() {
+    try {
+      const raw = ServicesApi?.prefs?.getStringPref(PREF_TOOLBAR_ROWS, "");
+      if (raw) {
+        const stored = JSON.parse(raw);
+        const row1 = sanitizeToolbarActionIds(stored?.row1);
+        const row1Set = new Set(row1);
+        const row2 = sanitizeToolbarActionIds(stored?.row2).filter(
+          (id) => !row1Set.has(id)
+        );
+        if (Array.isArray(stored?.row1) && Array.isArray(stored?.row2)) {
+          return { row1, row2 };
+        }
+      }
+    } catch (error) {
+      log("read toolbar rows", error);
+    }
+    return {
+      row1: [...DEFAULT_ROW1_ACTION_IDS],
+      row2: readQuickActionIds(),
+    };
+  }
+
+  /** 持久化两个按钮行的归属和顺序。 */
+  function saveToolbarRows(row1Ids, row2Ids) {
+    const row1 = sanitizeToolbarActionIds(row1Ids);
+    const row1Set = new Set(row1);
+    const row2 = sanitizeToolbarActionIds(row2Ids).filter((id) => !row1Set.has(id));
+    ServicesApi?.prefs?.setStringPref(
+      PREF_TOOLBAR_ROWS,
+      JSON.stringify({ row1, row2 })
+    );
+  }
+
   /**
    * 读取 Sidebery 自己的 storage.local
    * 优先使用 Firefox 当前的 IndexedDB 后端，保留旧后端兼容
@@ -829,6 +944,45 @@
     });
   }
 
+  /** 从 CSS URL 或节点属性中提取可供设置页加载的内部图标地址。 */
+  function normalizeToolbarIcon(value) {
+    const text = String(value || "").trim();
+    const url = /url\(\s*["']?([^"')]+)["']?\s*\)/i.exec(text)?.[1] || text;
+    return /^(?:chrome|resource|data|moz-extension):/i.test(url) ? url : "";
+  }
+
+  /** 读取真实工具栏节点及其图标子节点当前使用的图标。 */
+  function getToolbarActionIcon(node) {
+    if (!node) return "";
+    const iconNode = node.querySelector?.(
+      ".toolbarbutton-icon, .toolbarbutton-badge-stack .toolbarbutton-icon"
+    );
+    for (const candidate of [iconNode, node]) {
+      if (!candidate) continue;
+      for (const value of [candidate.src, candidate.image]) {
+        const icon = normalizeToolbarIcon(value);
+        if (icon) return icon;
+      }
+      for (const attribute of ["src", "image"]) {
+        const icon = normalizeToolbarIcon(candidate.getAttribute?.(attribute));
+        if (icon) return icon;
+      }
+      try {
+        const style = win.getComputedStyle(candidate);
+        for (const value of [
+          style.listStyleImage,
+          style.backgroundImage,
+          style.getPropertyValue("--webextension-menupanel-image"),
+          style.getPropertyValue("--webextension-toolbar-image"),
+        ]) {
+          const icon = normalizeToolbarIcon(value);
+          if (icon) return icon;
+        }
+      } catch (_) {}
+    }
+    return "";
+  }
+
   /** Collect built-in, single-button CUI widgets that fit the quick row. */
   function collectQuickActionCandidates() {
     const CUI = win.CustomizableUI;
@@ -851,7 +1005,8 @@
         node = widget?.forWindow?.(win)?.node || findWidgetNode(id);
       } catch (_) {}
 
-      const isDefault = DEFAULT_QUICK_ACTION_IDS.includes(id);
+      const isDefault =
+        DEFAULT_ROW1_ACTION_IDS.includes(id) || DEFAULT_QUICK_ACTION_IDS.includes(id);
       if (!isDefault) {
         if (widget?.webExtension || isAiJunk(node)) return;
         if (widget?.provider === CUI.PROVIDER_API) {
@@ -868,7 +1023,11 @@
         node?.getAttribute?.("label") ||
         node?.getAttribute?.("tooltiptext") ||
         id;
-      candidates.set(id, { id, label: String(label) });
+      candidates.set(id, {
+        id,
+        label: String(label),
+        icon: getToolbarActionIcon(node),
+      });
     };
 
     for (const id of KNOWN_NATIVE_QUICK_ACTION_IDS) {
@@ -893,9 +1052,15 @@
       log("collect navbar widgets", error);
     }
 
-    for (const id of readQuickActionIds()) {
+    const configuredRows = readToolbarRows();
+    for (const id of [...configuredRows.row1, ...configuredRows.row2]) {
       if (!candidates.has(id)) {
-        candidates.set(id, { id, label: QUICK_ACTION_LABELS[id] || id });
+        const node = findWidgetNode(id);
+        candidates.set(id, {
+          id,
+          label: QUICK_ACTION_LABELS[id] || id,
+          icon: getToolbarActionIcon(node),
+        });
       }
     }
     return Array.from(candidates.values());
@@ -1381,27 +1546,16 @@
         return JSON.stringify({
           isZh: IS_ZH,
           candidates: collectQuickActionCandidates(),
-          enabledIds: readQuickActionIds(),
+          rows: readToolbarRows(),
           appearance,
           appearanceError,
         });
       },
 
       async apply(payload) {
-        const { enabledIds, appearance } = JSON.parse(String(payload || "{}"));
-        const ids = Array.from(
-          new Set(
-            (Array.isArray(enabledIds) ? enabledIds : []).filter(
-              (id) =>
-                typeof id === "string" &&
-                /^[A-Za-z0-9_{}@.+-]+$/.test(id) &&
-                !QUICK_ACTION_EXCLUDED_IDS.has(id) &&
-                !/-browser-action$/i.test(id)
-            )
-          )
-        );
+        const { row1Ids, row2Ids, appearance } = JSON.parse(String(payload || "{}"));
         if (appearance) await saveSideberyAppearance(appearance);
-        saveQuickActionIds(ids);
+        saveToolbarRows(row1Ids, row2Ids);
 
         const windows = ServicesApi?.wm?.getEnumerator("navigator:browser");
         while (windows?.hasMoreElements()) {
@@ -1495,21 +1649,23 @@
     );
   }
 
-  /** 打开已有设置标签，未打开时创建受信任标签。 */
+  /** 关闭旧设置标签，再创建并选中新的受信任标签。 */
   async function openSettingsPage() {
     const browser = win.gBrowser;
     if (!browser) return;
 
-    const existing = Array.from(browser.tabs || []).find(
+    const existingTabs = Array.from(browser.tabs || []).filter(
       (tab) => tab.linkedBrowser?.currentURI?.spec?.startsWith(SETTINGS_URL)
     );
-    if (existing) {
-      await loadSettingsPageState(existing.linkedBrowser);
-      browser.selectedTab = existing;
-      return;
+    const url = await buildSettingsPageUrl();
+    for (const tab of existingTabs) {
+      try {
+        browser.removeTab(tab, { animate: false });
+      } catch (error) {
+        log("close stale settings tab", error);
+      }
     }
 
-    const url = await buildSettingsPageUrl();
     const tab = browser.addTrustedTab
       ? browser.addTrustedTab(url)
       : browser.addTab(url, {
@@ -1945,39 +2101,45 @@
       host.appendChild(hiddenActions);
     }
 
-    // 2) Row1 — window and navigation controls only.
-    const r1nodes = [
-      findLights(nav),
-      findWidgetNode("fxa-toolbar-menu-button"),
-      $("PanelUI-button"),
-      $("back-button"),
-      $("forward-button"),
-      $("stop-reload-button") || $("reload-button"),
-    ];
-    for (const n of r1nodes) {
-      if (move(row1, n)) {
-        resetToolbarGeom(n);
+    // 2) 窗口控制组固定在第一行最左，不进入用户配置。
+    const lights = findLights(nav);
+    if (lights) {
+      try {
+        row1.insertBefore(lights, row1.firstChild);
+        resetToolbarGeom(lights);
+      } catch (error) {
+        log("place window controls", error);
       }
     }
 
-    // 3) Quick row — configured native actions in the persisted order.
-    const quickActionIds = readQuickActionIds();
-    ensureQuickActionsPlaced(quickActionIds);
-    for (const node of Array.from(quickRow.children)) {
-      if (!quickActionIds.includes(node.id || "")) move(hiddenActions, node);
-    }
-    for (const id of quickActionIds) {
-      const node = findWidgetNode(id);
-      if (!node) continue;
-      try {
-        // 重新追加同一父容器中的节点，让保存后的顺序立即生效。
-        quickRow.appendChild(node);
-      } catch (error) {
-        log("order quick action", id, error);
-        continue;
+    // 3) 其余原生按钮按双行配置自由排列。
+    const toolbarRows = readToolbarRows();
+    const configuredIds = new Set([...toolbarRows.row1, ...toolbarRows.row2]);
+    ensureQuickActionsPlaced(
+      [...configuredIds].filter((id) => !DEFAULT_ROW1_ACTION_IDS.includes(id))
+    );
+    for (const row of [row1, quickRow]) {
+      for (const node of Array.from(row.children)) {
+        if (node === lights) continue;
+        if (!configuredIds.has(node.id || "")) move(hiddenActions, node);
       }
-      lightGeom(node);
     }
+
+    const placeConfiguredRow = (row, ids) => {
+      for (const id of ids) {
+        const node = findWidgetNode(id);
+        if (!node) continue;
+        try {
+          // 追加同一父容器中的节点，同时应用跨行归属和行内顺序。
+          row.appendChild(node);
+          lightGeom(node);
+        } catch (error) {
+          log("order toolbar action", id, error);
+        }
+      }
+    };
+    placeConfiguredRow(row1, toolbarRows.row1);
+    placeConfiguredRow(quickRow, toolbarRows.row2);
 
     ensureSettingsMenu();
 
@@ -2092,6 +2254,8 @@
     try {
       syncWidth();
       ensureRows();
+      updateSidebarMinWidth();
+      win.requestAnimationFrame(updateSidebarMinWidth);
       measureChromeHeight();
       log("layout", reason, "w=", root.style.getPropertyValue("--uc-left-width"));
     } catch (e) {
@@ -2114,7 +2278,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.34 (reusable ZenFox settings tab; Sidebery selected)");
+      logAlways("ready v0.5.39 (guarded toolbar context menu; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();

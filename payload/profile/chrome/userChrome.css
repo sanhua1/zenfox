@@ -1,8 +1,8 @@
 @import url("platform-windows-linux.css");
 
 /* ==========================================================================
-   PLAN.md · 样式 v0.5.31
-   重点：固定操作进入第二行；原生 urlbar 与插件行依次下移，
+   PLAN.md · 样式 v0.5.39
+   重点：前两行按钮可跨行排列；原生 urlbar 与插件行依次下移，
          JS 禁用 popover/top-layer breakout，
          原生 UrlbarView 作为 row2 内部下拉层，不再以整窗为宽度参照。
    ========================================================================== */
@@ -183,6 +183,11 @@
   order: 1 !important;
 }
 
+/* 隐藏工具栏右键菜单中的原生定制入口，避免误触破坏 ZenFox 布局。 */
+#toolbar-context-customize {
+  display: none !important;
+}
+
 :root:not([customizing]) #uc-left-hidden-actions {
   display: none !important;
   visibility: collapse !important;
@@ -350,9 +355,7 @@
   padding: 0 !important;
 }
 
-/*
- * 行2：固定原生操作，保持用户指定顺序。
- */
+/* 第二行与第一行共用相同按钮槽位，按钮归属由配置决定。 */
 :root:not([customizing]) #uc-left-quick-actions {
   order: 2 !important;
   min-height: var(--uc-row1-height) !important;
@@ -364,7 +367,7 @@
   -moz-window-dragging: drag !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem {
   box-sizing: border-box !important;
   flex: 0 0 auto !important;
   width: auto !important;
@@ -382,8 +385,8 @@
  * 所有单按钮型 CUI 控件共用外层状态背景。组合 toolbaritem 中的每个
  * 子按钮也独立占一个槽位，后续增加原生控件时无需补专属 hover 规则。
  */
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton,
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton {
   appearance: none !important;
   position: relative !important;
   box-sizing: border-box !important;
@@ -410,25 +413,25 @@
   --toolbarbutton-inner-padding: 0 !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton:not([disabled]):hover,
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton:not([disabled]):hover {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:not([disabled]):hover,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:not([disabled]):hover {
   background-color: var(--toolbarbutton-background-color-hover) !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]),
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]) {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]) {
   background-color: var(--toolbarbutton-background-color-active) !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton:focus-visible,
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton:focus-visible {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:focus-visible,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:focus-visible {
   outline: var(--focus-outline) !important;
   outline-offset: -2px !important;
 }
 
 /* 原生内部节点只负责图标、角标和动画，不再各自绘制状态背景。 */
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 0 !important;
@@ -436,10 +439,10 @@
   outline: none !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton > .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-quick-actions > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton > .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-quick-actions > toolbaritem > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > .toolbarbutton-icon,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > .toolbarbutton-icon,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: var(--uc-quick-icon) !important;
   height: var(--uc-quick-icon) !important;
@@ -451,8 +454,8 @@
   padding: 0 !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions .toolbarbutton-badge-stack,
-:root:not([customizing]) #uc-left-quick-actions #downloads-indicator-anchor {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) .toolbarbutton-badge-stack,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) #downloads-indicator-anchor {
   overflow: visible !important;
 }
 
@@ -460,8 +463,8 @@
  * Firefox's solid native puzzle. Its circular notch is part of the SVG path,
  * not a mask; explicitly clear inherited clipping while keeping that shape.
  */
-:root:not([customizing]) #uc-left-quick-actions > #unified-extensions-button,
-:root:not([customizing]) #uc-left-quick-actions > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button > .toolbarbutton-icon {
   list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.svg") !important;
   clip-path: none !important;
   mask: none !important;
@@ -469,7 +472,7 @@
   overflow: visible !important;
 }
 
-:root:not([customizing]) #uc-left-quick-actions > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button > .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: 16px !important;
   height: 16px !important;
@@ -592,6 +595,24 @@
 :root:not([customizing]) #uc-left-row2 #trust-icon-container {
   position: relative !important;
   top: -3px !important;
+}
+
+/* 特殊组合控件也严格占用一个 24×26 槽位。 */
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > :is(#PanelUI-button, #stop-reload-button) {
+  box-sizing: border-box !important;
+  flex: 0 0 var(--uc-quick-slot) !important;
+  width: var(--uc-quick-slot) !important;
+  min-width: var(--uc-quick-slot) !important;
+  max-width: var(--uc-quick-slot) !important;
+  height: var(--uc-row1-height) !important;
+  min-height: var(--uc-row1-height) !important;
+  max-height: var(--uc-row1-height) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #fxa-toolbar-menu-button {
+  margin-inline-start: 0 !important;
 }
 
 /*
@@ -1128,9 +1149,10 @@
 /* ========== 侧栏：顶让位 = chrome 实测高度，无额外空隙 ========== */
 :root:not([customizing]) #sidebar-box {
   /*
-   * 不覆盖 width/min-width/max-width：交给 Firefox 原生 splitter 调整。
-   * JS 用 ResizeObserver 只读实际宽度，再单向同步给上方 chrome。
+   * Firefox 原生 splitter 继续控制实际宽度。
+   * JS 只按前两行内容计算最小值，避免按钮被拖到侧边栏外。
    */
+  min-width: var(--uc-sidebar-min-width, 0px) !important;
   /* --uc-chrome-height 由 JS 设为 #nav-bar 底边；gap 为 0 时 Sidebery 紧贴其下。 */
   padding-top: calc(var(--uc-chrome-height) + var(--uc-sidebar-gap, 4px)) !important;
   box-sizing: border-box !important;

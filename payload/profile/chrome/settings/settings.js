@@ -9,6 +9,13 @@ const DEFAULT_QUICK_ACTION_IDS = [
   "developer-button",
   "preferences-button",
 ];
+const DEFAULT_ROW1_ACTION_IDS = [
+  "fxa-toolbar-menu-button",
+  "PanelUI-button",
+  "back-button",
+  "forward-button",
+  "stop-reload-button",
+];
 const DEFAULT_APPEARANCE = {
   fontSize: "m",
   density: "default",
@@ -28,18 +35,20 @@ const IS_ZH =
 const TEXT = IS_ZH
   ? {
       title: "ZenFox 设置",
-      subtitle: "配置第二行按钮和 Sidebery 外观。",
-      quickActions: "第二行按钮",
+      subtitle: "配置前两行按钮和 Sidebery 外观。",
+      quickActions: "按钮布局",
       appearance: "外观设置",
-      shown: "已显示",
+      row1: "第一行",
+      row2: "第二行",
       available: "可添加",
       dragSort: "拖拽排序",
       canAdd: "可添加",
       moveUp: "上移",
       moveDown: "下移",
+      moveOtherRow: "移到另一行",
       hide: "隐藏",
-      add: "添加",
-      emptyShown: "第二行当前为空。",
+      emptyRow1: "第一行当前只有窗口控制组。",
+      emptyRow2: "第二行当前为空。",
       emptyAvailable: "没有其他可添加的原生单按钮。",
       reset: "恢复默认",
       apply: "应用",
@@ -59,18 +68,20 @@ const TEXT = IS_ZH
     }
   : {
       title: "ZenFox Settings",
-      subtitle: "Configure second-row buttons and Sidebery appearance.",
-      quickActions: "Quick Actions",
+      subtitle: "Configure the first two button rows and Sidebery appearance.",
+      quickActions: "Button Layout",
       appearance: "Appearance",
-      shown: "Shown",
+      row1: "First row",
+      row2: "Second row",
       available: "Available",
       dragSort: "Drag to reorder",
       canAdd: "Available to add",
       moveUp: "Move up",
       moveDown: "Move down",
+      moveOtherRow: "Move to other row",
       hide: "Hide",
-      add: "Add",
-      emptyShown: "The second row is empty.",
+      emptyRow1: "Only the window controls are in the first row.",
+      emptyRow2: "The second row is empty.",
       emptyAvailable: "No other native single-button widgets are available.",
       reset: "Restore defaults",
       apply: "Apply",
@@ -90,7 +101,8 @@ const TEXT = IS_ZH
     };
 
 let candidates = [];
-let enabledIds = [];
+let row1Ids = [];
+let row2Ids = [];
 let appearance = null;
 let appearanceError = "";
 let activeTab = "quick-actions";
@@ -124,24 +136,66 @@ function markDirty() {
   document.querySelector("#apply-button").disabled = false;
 }
 
-/** 绘制第二行按钮列表及拖拽排序。 */
+/** 返回指定按钮行对应的草稿数组。 */
+function getActionRow(rowName) {
+  return rowName === "row1" ? row1Ids : row2Ids;
+}
+
+/** 把按钮移动到指定行和插入位置，同时保证两行不重复。 */
+function moveActionToRow(id, rowName, index = null) {
+  if (!id || (rowName !== "row1" && rowName !== "row2")) return;
+  const currentTarget = getActionRow(rowName);
+  const currentIndex = currentTarget.indexOf(id);
+  const adjustedIndex =
+    index !== null && currentIndex >= 0 && currentIndex < index ? index - 1 : index;
+  row1Ids = row1Ids.filter((item) => item !== id);
+  row2Ids = row2Ids.filter((item) => item !== id);
+  const target = getActionRow(rowName);
+  const insertAt =
+    adjustedIndex === null
+      ? target.length
+      : Math.max(0, Math.min(adjustedIndex, target.length));
+  target.splice(insertAt, 0, id);
+  markDirty();
+  renderQuickActions();
+}
+
+/** 绘制第一行、第二行和可添加按钮，支持跨行拖拽。 */
 function renderQuickActions() {
-  const enabledList = document.querySelector("#enabled-actions");
+  const row1List = document.querySelector("#row1-actions");
+  const row2List = document.querySelector("#row2-actions");
   const availableList = document.querySelector("#available-actions");
-  enabledList.replaceChildren();
+  row1List.replaceChildren();
+  row2List.replaceChildren();
   availableList.replaceChildren();
   const candidateMap = new Map(candidates.map((item) => [item.id, item]));
 
-  const createRow = (item, enabled, index = -1) => {
+  const createRow = (item, rowName = "", index = -1) => {
+    const enabled = rowName === "row1" || rowName === "row2";
+    const rowIds = enabled ? getActionRow(rowName) : [];
     const row = document.createElement("div");
     row.className = "settings-row";
     row.dataset.widgetId = item.id;
+    if (enabled) row.dataset.actionRow = rowName;
     row.draggable = enabled;
 
     const handle = document.createElement("span");
     handle.className = "row-handle";
-    handle.textContent = enabled ? "⋮⋮" : "+";
     handle.title = enabled ? TEXT.dragSort : TEXT.canAdd;
+    if (item.icon) {
+      const icon = document.createElement("img");
+      icon.className = "row-icon";
+      icon.src = item.icon;
+      icon.alt = "";
+      icon.addEventListener(
+        "error",
+        () => handle.replaceChildren(enabled ? "⋮⋮" : "+"),
+        { once: true }
+      );
+      handle.append(icon);
+    } else {
+      handle.textContent = enabled ? "⋮⋮" : "+";
+    }
 
     const text = document.createElement("span");
     text.className = "row-text";
@@ -156,11 +210,15 @@ function renderQuickActions() {
     if (enabled) {
       const up = makeButton("↑", "up", TEXT.moveUp);
       const down = makeButton("↓", "down", TEXT.moveDown);
+      const other = makeButton("⇄", "other-row", TEXT.moveOtherRow);
       up.disabled = index === 0;
-      down.disabled = index === enabledIds.length - 1;
-      actions.append(up, down, makeButton(TEXT.hide, "hide"));
+      down.disabled = index === rowIds.length - 1;
+      actions.append(up, down, other, makeButton(TEXT.hide, "hide"));
     } else {
-      actions.append(makeButton(TEXT.add, "add"));
+      actions.append(
+        makeButton(TEXT.row1, "add-row1"),
+        makeButton(TEXT.row2, "add-row2")
+      );
     }
     row.append(handle, text, actions);
 
@@ -173,33 +231,34 @@ function renderQuickActions() {
       row.addEventListener("dragover", (event) => event.preventDefault());
       row.addEventListener("drop", (event) => {
         event.preventDefault();
+        event.stopPropagation();
         const sourceId = event.dataTransfer?.getData("text/plain");
-        const sourceIndex = enabledIds.indexOf(sourceId);
-        const targetIndex = enabledIds.indexOf(item.id);
-        if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
-        enabledIds.splice(sourceIndex, 1);
-        enabledIds.splice(targetIndex, 0, sourceId);
-        markDirty();
-        renderQuickActions();
+        if (!sourceId || sourceId === item.id) return;
+        moveActionToRow(sourceId, rowName, getActionRow(rowName).indexOf(item.id));
       });
     }
     return row;
   };
 
-  enabledIds.forEach((id, index) => {
-    enabledList.append(createRow(candidateMap.get(id) || { id, label: id }, true, index));
-  });
-  if (!enabledIds.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = TEXT.emptyShown;
-    enabledList.append(empty);
-  }
+  const renderEnabledRow = (list, ids, rowName, emptyText) => {
+    ids.forEach((id, index) => {
+      list.append(createRow(candidateMap.get(id) || { id, label: id }, rowName, index));
+    });
+    if (!ids.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = emptyText;
+      list.append(empty);
+    }
+  };
+  renderEnabledRow(row1List, row1Ids, "row1", TEXT.emptyRow1);
+  renderEnabledRow(row2List, row2Ids, "row2", TEXT.emptyRow2);
 
+  const enabledIds = new Set([...row1Ids, ...row2Ids]);
   const available = candidates
-    .filter((item) => !enabledIds.includes(item.id))
+    .filter((item) => !enabledIds.has(item.id))
     .sort((a, b) => a.label.localeCompare(b.label, IS_ZH ? "zh-CN" : "en"));
-  available.forEach((item) => availableList.append(createRow(item, false)));
+  available.forEach((item) => availableList.append(createRow(item)));
   if (!available.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
@@ -264,10 +323,16 @@ function renderColorRow(selector, label, field) {
   input.spellcheck = false;
   input.dataset.colorText = field;
   input.value = appearance?.[field] || "";
-  const toggle = makeButton(appearance?.[`${field}Enabled`] ? TEXT.on : TEXT.off, "");
+  const enabled = !!appearance?.[`${field}Enabled`];
+  const toggle = makeButton("", "");
+  toggle.classList.add("switch-control");
   toggle.dataset.appearanceToggle = field;
-  toggle.classList.toggle("selected", !!appearance?.[`${field}Enabled`]);
-  const disabled = !appearance || !appearance[`${field}Enabled`];
+  toggle.classList.toggle("selected", enabled);
+  toggle.setAttribute("role", "switch");
+  toggle.setAttribute("aria-checked", String(enabled));
+  toggle.setAttribute("aria-label", `${label}：${enabled ? TEXT.on : TEXT.off}`);
+  toggle.title = enabled ? TEXT.on : TEXT.off;
+  const disabled = !appearance || !enabled;
   picker.disabled = disabled;
   input.disabled = disabled;
   toggle.disabled = !appearance;
@@ -329,21 +394,31 @@ function handleClick(event) {
 
   const actionButton = event.target.closest?.("[data-action]");
   if (actionButton) {
-    const id = actionButton.closest(".settings-row")?.dataset.widgetId;
-    const index = enabledIds.indexOf(id);
+    const itemRow = actionButton.closest(".settings-row");
+    const id = itemRow?.dataset.widgetId;
+    const rowName = itemRow?.dataset.actionRow;
+    const rowIds = rowName ? getActionRow(rowName) : [];
+    const index = rowIds.indexOf(id);
     switch (actionButton.dataset.action) {
       case "up":
-        if (index > 0) [enabledIds[index - 1], enabledIds[index]] = [enabledIds[index], enabledIds[index - 1]];
+        if (index > 0) [rowIds[index - 1], rowIds[index]] = [rowIds[index], rowIds[index - 1]];
         break;
       case "down":
-        if (index >= 0 && index < enabledIds.length - 1) [enabledIds[index], enabledIds[index + 1]] = [enabledIds[index + 1], enabledIds[index]];
+        if (index >= 0 && index < rowIds.length - 1)
+          [rowIds[index], rowIds[index + 1]] = [rowIds[index + 1], rowIds[index]];
         break;
+      case "other-row":
+        moveActionToRow(id, rowName === "row1" ? "row2" : "row1");
+        return;
       case "hide":
-        if (index >= 0) enabledIds.splice(index, 1);
+        if (index >= 0) rowIds.splice(index, 1);
         break;
-      case "add":
-        if (id && !enabledIds.includes(id)) enabledIds.push(id);
-        break;
+      case "add-row1":
+        moveActionToRow(id, "row1");
+        return;
+      case "add-row2":
+        moveActionToRow(id, "row2");
+        return;
       default:
         return;
     }
@@ -358,7 +433,8 @@ function handleClick(event) {
       appearanceError = "";
       renderAppearance();
     } else {
-      enabledIds = [...DEFAULT_QUICK_ACTION_IDS];
+      row1Ids = [...DEFAULT_ROW1_ACTION_IDS];
+      row2Ids = [...DEFAULT_QUICK_ACTION_IDS];
       renderQuickActions();
     }
     markDirty();
@@ -387,7 +463,7 @@ function applySettings() {
   status.classList.remove("error");
   status.textContent = "";
   window.location.hash = `apply=${encodeURIComponent(
-    JSON.stringify({ enabledIds, appearance, requestId: Date.now() })
+    JSON.stringify({ row1Ids, row2Ids, appearance, requestId: Date.now() })
   )}`;
 }
 
@@ -399,8 +475,10 @@ function applyPageData(pageData) {
   candidates = Array.from(state.candidates || [], (item) => ({
     id: item.id,
     label: item.label,
+    icon: item.icon || "",
   }));
-  enabledIds = Array.from(state.enabledIds || []);
+  row1Ids = Array.from(state.rows?.row1 || DEFAULT_ROW1_ACTION_IDS);
+  row2Ids = Array.from(state.rows?.row2 || DEFAULT_QUICK_ACTION_IDS);
   appearance = state.appearance ? { ...state.appearance } : null;
   appearanceError = state.appearanceError || "";
   renderQuickActions();
@@ -427,7 +505,8 @@ async function init() {
   document.querySelector("#page-subtitle").textContent = TEXT.subtitle;
   document.querySelector('[data-settings-tab="quick-actions"]').textContent = TEXT.quickActions;
   document.querySelector('[data-settings-tab="appearance"]').textContent = TEXT.appearance;
-  document.querySelector("#enabled-title").textContent = TEXT.shown;
+  document.querySelector("#row1-title").textContent = TEXT.row1;
+  document.querySelector("#row2-title").textContent = TEXT.row2;
   document.querySelector("#available-title").textContent = TEXT.available;
   document.querySelector("#reset-button").textContent = TEXT.reset;
   document.querySelector("#apply-button").textContent = TEXT.apply;
@@ -435,6 +514,14 @@ async function init() {
   document.addEventListener("click", handleClick);
   document.addEventListener("input", handleInput);
   document.querySelector("#apply-button").addEventListener("click", applySettings);
+  document.querySelectorAll("[data-action-row]").forEach((list) => {
+    list.addEventListener("dragover", (event) => event.preventDefault());
+    list.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const id = event.dataTransfer?.getData("text/plain");
+      if (id) moveActionToRow(id, list.dataset.actionRow);
+    });
+  });
   window.addEventListener("hashchange", () => {
     const pageData = readPageData();
     if (pageData) applyPageData(pageData);
