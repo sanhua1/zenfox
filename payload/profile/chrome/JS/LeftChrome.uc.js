@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.33 — bridged tab-based ZenFox settings
-// @version         0.5.33
+// @description     PLAN.md v0.5.34 — reusable tab-based ZenFox settings
+// @version         0.5.34
 // @author          local
 // ==/UserScript==
 
@@ -57,6 +57,7 @@
  *   v0.5.31 supports fresh Sidebery defaults and restores back/forward order.
  *   v0.5.32 opens ZenFox settings in a dedicated privileged browser tab.
  *   v0.5.33 bridges the settings tab through browser chrome without page privileges.
+ *   v0.5.34 keeps the settings tab reusable and restores missing page state.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -1436,9 +1437,24 @@
     const browser = win.gBrowser;
     if (!browser || win.__zenfoxSettingsBridge) return;
 
+    const recoverPageState = (linkedBrowser) => {
+      if (linkedBrowser.__zenfoxLoadingSettings) return;
+      linkedBrowser.__zenfoxLoadingSettings = true;
+      loadSettingsPageState(linkedBrowser)
+        .catch((error) => log("restore settings page", error))
+        .finally(() => {
+          linkedBrowser.__zenfoxLoadingSettings = false;
+        });
+    };
+
     const listener = {
       onLocationChange(linkedBrowser, _webProgress, _request, location) {
         const spec = location?.spec || "";
+        if (spec === SETTINGS_URL || spec === `${SETTINGS_URL}#`) {
+          recoverPageState(linkedBrowser);
+          return;
+        }
+
         const prefix = `${SETTINGS_URL}#apply=`;
         if (!spec.startsWith(prefix) || linkedBrowser.__zenfoxApplyingSettings) return;
 
@@ -1462,6 +1478,12 @@
 
     browser.addTabsProgressListener(listener);
     win.__zenfoxSettingsBridge = listener;
+    for (const tab of browser.tabs || []) {
+      const spec = tab.linkedBrowser?.currentURI?.spec || "";
+      if (spec === SETTINGS_URL || spec === `${SETTINGS_URL}#`) {
+        recoverPageState(tab.linkedBrowser);
+      }
+    }
     win.addEventListener(
       "unload",
       () => {
@@ -2092,7 +2114,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.33 (bridged ZenFox settings tab; Sidebery selected)");
+      logAlways("ready v0.5.34 (reusable ZenFox settings tab; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();

@@ -99,7 +99,11 @@ let activeTab = "quick-actions";
 function readPageData() {
   const prefix = "#data=";
   if (!window.location.hash.startsWith(prefix)) return null;
-  return JSON.parse(decodeURIComponent(window.location.hash.slice(prefix.length)));
+  try {
+    return JSON.parse(decodeURIComponent(window.location.hash.slice(prefix.length)));
+  } catch (_) {
+    return null;
+  }
 }
 
 /** 创建统一样式的按钮。 */
@@ -117,6 +121,7 @@ function markDirty() {
   const status = document.querySelector("#save-status");
   status.textContent = "";
   status.classList.remove("error");
+  document.querySelector("#apply-button").disabled = false;
 }
 
 /** 绘制第二行按钮列表及拖拽排序。 */
@@ -382,8 +387,36 @@ function applySettings() {
   status.classList.remove("error");
   status.textContent = "";
   window.location.hash = `apply=${encodeURIComponent(
-    JSON.stringify({ enabledIds, appearance })
+    JSON.stringify({ enabledIds, appearance, requestId: Date.now() })
   )}`;
+}
+
+/** 接收浏览器外壳回传的配置，并恢复可继续编辑的页面状态。 */
+function applyPageData(pageData) {
+  if (!pageData?.state) return false;
+
+  const { state, result } = pageData;
+  candidates = Array.from(state.candidates || [], (item) => ({
+    id: item.id,
+    label: item.label,
+  }));
+  enabledIds = Array.from(state.enabledIds || []);
+  appearance = state.appearance ? { ...state.appearance } : null;
+  appearanceError = state.appearanceError || "";
+  renderQuickActions();
+  renderAppearance();
+
+  const status = document.querySelector("#save-status");
+  status.classList.remove("error");
+  status.textContent = "";
+  if (result?.ok) {
+    status.textContent = TEXT.saved;
+  } else if (result && !result.ok) {
+    status.textContent = `${TEXT.saveFailed}${result.message || ""}`;
+    status.classList.add("error");
+  }
+  document.querySelector("#apply-button").disabled = false;
+  return true;
 }
 
 /** 写入本地化文本并加载当前配置。 */
@@ -402,30 +435,19 @@ async function init() {
   document.addEventListener("click", handleClick);
   document.addEventListener("input", handleInput);
   document.querySelector("#apply-button").addEventListener("click", applySettings);
+  window.addEventListener("hashchange", () => {
+    const pageData = readPageData();
+    if (pageData) applyPageData(pageData);
+  });
   selectTab("quick-actions");
 
-  const pageData = INITIAL_PAGE_DATA;
-  if (!pageData?.state) {
+  if (!applyPageData(INITIAL_PAGE_DATA)) {
     const status = document.querySelector("#save-status");
     status.textContent = TEXT.stateUnavailable;
     status.classList.add("error");
     document.querySelector("#apply-button").disabled = true;
+    if (window.location.hash) window.location.hash = "";
     return;
-  }
-
-  const { state, result } = pageData;
-  candidates = Array.from(state.candidates || [], (item) => ({ id: item.id, label: item.label }));
-  enabledIds = Array.from(state.enabledIds || []);
-  appearance = state.appearance ? { ...state.appearance } : null;
-  appearanceError = state.appearanceError || "";
-  renderQuickActions();
-  renderAppearance();
-  if (result?.ok) {
-    document.querySelector("#save-status").textContent = TEXT.saved;
-  } else if (result && !result.ok) {
-    const status = document.querySelector("#save-status");
-    status.textContent = `${TEXT.saveFailed}${result.message || ""}`;
-    status.classList.add("error");
   }
 }
 
