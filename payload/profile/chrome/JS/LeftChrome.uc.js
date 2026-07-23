@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.32 — tab-based ZenFox settings
-// @version         0.5.32
+// @description     PLAN.md v0.5.33 — bridged tab-based ZenFox settings
+// @version         0.5.33
 // @author          local
 // ==/UserScript==
 
@@ -56,6 +56,7 @@
  *   v0.5.30 adds a persisted, sortable settings panel for native quick actions.
  *   v0.5.31 supports fresh Sidebery defaults and restores back/forward order.
  *   v0.5.32 opens ZenFox settings in a dedicated privileged browser tab.
+ *   v0.5.33 bridges the settings tab through browser chrome without page privileges.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -1377,6 +1378,7 @@
           appearanceError = String(error?.message || error);
         }
         return JSON.stringify({
+          isZh: IS_ZH,
           candidates: collectQuickActionCandidates(),
           enabledIds: readQuickActionIds(),
           appearance,
@@ -1412,22 +1414,83 @@
     });
   }
 
+  /** 构造只含界面数据的设置页地址。 */
+  async function buildSettingsPageUrl(result = null) {
+    const state = JSON.parse(await win.ZenFoxSettings.read());
+    return `${SETTINGS_URL}#data=${encodeURIComponent(JSON.stringify({ state, result }))}`;
+  }
+
+  /** 用系统权限向设置页回传最新配置和保存结果。 */
+  async function loadSettingsPageState(browser, result = null) {
+    const url = await buildSettingsPageUrl(result);
+    browser.loadURI(url, {
+      triggeringPrincipal: ServicesApi?.scriptSecurityManager?.getSystemPrincipal(),
+    });
+  }
+
+  /**
+   * 监听设置页提交的地址片段
+   * 页面不接触 ChromeUtils，所有配置读写留在浏览器外壳
+   */
+  function registerSettingsPageBridge() {
+    const browser = win.gBrowser;
+    if (!browser || win.__zenfoxSettingsBridge) return;
+
+    const listener = {
+      onLocationChange(linkedBrowser, _webProgress, _request, location) {
+        const spec = location?.spec || "";
+        const prefix = `${SETTINGS_URL}#apply=`;
+        if (!spec.startsWith(prefix) || linkedBrowser.__zenfoxApplyingSettings) return;
+
+        linkedBrowser.__zenfoxApplyingSettings = true;
+        const payload = spec.slice(prefix.length);
+        Promise.resolve()
+          .then(() => win.ZenFoxSettings.apply(decodeURIComponent(payload)))
+          .then(() => loadSettingsPageState(linkedBrowser, { ok: true }))
+          .catch((error) =>
+            loadSettingsPageState(linkedBrowser, {
+              ok: false,
+              message: String(error?.message || error),
+            })
+          )
+          .catch((error) => log("reload settings page", error))
+          .finally(() => {
+            linkedBrowser.__zenfoxApplyingSettings = false;
+          });
+      },
+    };
+
+    browser.addTabsProgressListener(listener);
+    win.__zenfoxSettingsBridge = listener;
+    win.addEventListener(
+      "unload",
+      () => {
+        try {
+          browser.removeTabsProgressListener(listener);
+        } catch (_) {}
+      },
+      { once: true }
+    );
+  }
+
   /** 打开已有设置标签，未打开时创建受信任标签。 */
-  function openSettingsPage() {
+  async function openSettingsPage() {
     const browser = win.gBrowser;
     if (!browser) return;
 
     const existing = Array.from(browser.tabs || []).find(
-      (tab) => tab.linkedBrowser?.currentURI?.spec === SETTINGS_URL
+      (tab) => tab.linkedBrowser?.currentURI?.spec?.startsWith(SETTINGS_URL)
     );
     if (existing) {
+      await loadSettingsPageState(existing.linkedBrowser);
       browser.selectedTab = existing;
       return;
     }
 
+    const url = await buildSettingsPageUrl();
     const tab = browser.addTrustedTab
-      ? browser.addTrustedTab(SETTINGS_URL)
-      : browser.addTab(SETTINGS_URL, {
+      ? browser.addTrustedTab(url)
+      : browser.addTab(url, {
           triggeringPrincipal: ServicesApi?.scriptSecurityManager?.getSystemPrincipal(),
         });
     browser.selectedTab = tab;
@@ -2021,6 +2084,7 @@
     root.setAttribute("uc-left-chrome", "init");
     setWidth(CFG.defaultWidth);
     registerSettingsPageApi();
+    registerSettingsPageBridge();
 
     const boot = () => {
       layout("boot");
@@ -2028,7 +2092,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.32 (tab-based ZenFox settings; Sidebery selected)");
+      logAlways("ready v0.5.33 (bridged ZenFox settings tab; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();

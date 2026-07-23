@@ -1,9 +1,5 @@
 "use strict";
 
-const { Services } = ChromeUtils.importESModule(
-  "resource://gre/modules/Services.sys.mjs"
-);
-
 const DEFAULT_QUICK_ACTION_IDS = [
   "unified-extensions-button",
   "downloads-button",
@@ -24,11 +20,11 @@ const DEFAULT_APPEARANCE = {
 const FONT_SIZES = ["xxs", "xs", "s", "m", "l", "xl", "xxl"];
 const DENSITIES = ["compact", "default", "loose"];
 
-const IS_ZH = String(
-  Services.locale?.appLocaleAsBCP47 || Services.locale?.requestedLocale || navigator.language
-)
-  .toLowerCase()
-  .startsWith("zh");
+const INITIAL_PAGE_DATA = readPageData();
+const IS_ZH =
+  typeof INITIAL_PAGE_DATA?.state?.isZh === "boolean"
+    ? INITIAL_PAGE_DATA.state.isZh
+    : String(navigator.language || "en").toLowerCase().startsWith("zh");
 const TEXT = IS_ZH
   ? {
       title: "ZenFox 设置",
@@ -59,7 +55,7 @@ const TEXT = IS_ZH
       on: "打开",
       off: "关闭",
       sideberyUnavailable: "无法读取 Sidebery 配置。请确认 Sidebery 已启用。",
-      apiUnavailable: "ZenFox 设置接口不可用。请关闭此标签页并重新打开。",
+      stateUnavailable: "无法读取 ZenFox 配置。请关闭此标签页并重新打开。",
     }
   : {
       title: "ZenFox Settings",
@@ -90,24 +86,20 @@ const TEXT = IS_ZH
       on: "On",
       off: "Off",
       sideberyUnavailable: "Unable to read Sidebery settings. Make sure Sidebery is enabled.",
-      apiUnavailable: "The ZenFox settings API is unavailable. Close this tab and open it again.",
+      stateUnavailable: "Unable to read ZenFox settings. Close this tab and open it again.",
     };
 
-let settingsApi = null;
 let candidates = [];
 let enabledIds = [];
 let appearance = null;
 let appearanceError = "";
 let activeTab = "quick-actions";
 
-/** 获取打开设置页的浏览器窗口接口。 */
-function findSettingsApi() {
-  const windows = Services.wm.getEnumerator("navigator:browser");
-  while (windows.hasMoreElements()) {
-    const api = windows.getNext()?.ZenFoxSettings;
-    if (api) return api;
-  }
-  return null;
+/** 解析浏览器外壳写入地址片段的配置数据。 */
+function readPageData() {
+  const prefix = "#data=";
+  if (!window.location.hash.startsWith(prefix)) return null;
+  return JSON.parse(decodeURIComponent(window.location.hash.slice(prefix.length)));
 }
 
 /** 创建统一样式的按钮。 */
@@ -382,22 +374,16 @@ function handleInput(event) {
   }
 }
 
-/** 保存草稿并显示结果。 */
-async function applySettings() {
+/** 把草稿交给浏览器外壳保存。 */
+function applySettings() {
   const button = document.querySelector("#apply-button");
   const status = document.querySelector("#save-status");
   button.disabled = true;
   status.classList.remove("error");
   status.textContent = "";
-  try {
-    await settingsApi.apply(JSON.stringify({ enabledIds, appearance }));
-    status.textContent = TEXT.saved;
-  } catch (error) {
-    status.textContent = `${TEXT.saveFailed}${String(error?.message || error)}`;
-    status.classList.add("error");
-  } finally {
-    button.disabled = false;
-  }
+  window.location.hash = `apply=${encodeURIComponent(
+    JSON.stringify({ enabledIds, appearance })
+  )}`;
 }
 
 /** 写入本地化文本并加载当前配置。 */
@@ -418,22 +404,29 @@ async function init() {
   document.querySelector("#apply-button").addEventListener("click", applySettings);
   selectTab("quick-actions");
 
-  settingsApi = findSettingsApi();
-  if (!settingsApi) {
+  const pageData = INITIAL_PAGE_DATA;
+  if (!pageData?.state) {
     const status = document.querySelector("#save-status");
-    status.textContent = TEXT.apiUnavailable;
+    status.textContent = TEXT.stateUnavailable;
     status.classList.add("error");
     document.querySelector("#apply-button").disabled = true;
     return;
   }
 
-  const state = JSON.parse(await settingsApi.read());
+  const { state, result } = pageData;
   candidates = Array.from(state.candidates || [], (item) => ({ id: item.id, label: item.label }));
   enabledIds = Array.from(state.enabledIds || []);
   appearance = state.appearance ? { ...state.appearance } : null;
   appearanceError = state.appearanceError || "";
   renderQuickActions();
   renderAppearance();
+  if (result?.ok) {
+    document.querySelector("#save-status").textContent = TEXT.saved;
+  } else if (result && !result.ok) {
+    const status = document.querySelector("#save-status");
+    status.textContent = `${TEXT.saveFailed}${result.message || ""}`;
+    status.classList.add("error");
+  }
 }
 
 init().catch((error) => {
