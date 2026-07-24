@@ -338,8 +338,7 @@ try {
     Copy-Item (Join-Path $payload 'profile\chrome\sidebery-companion.css') (Join-Path $chrome 'sidebery-companion.css') -Force
 
     # 标记本次安装，让 Firefox 下次启动时重新同步主题色。
-    $installToken = "$zenfoxVersion|$stamp|$([guid]::NewGuid().ToString('N'))"
-    Set-Content -LiteralPath (Join-Path $chrome 'zenfox-install-token') -Value $installToken -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $chrome 'zenfox-install-token') -Value ('{0}|{1}|{2}' -f $zenfoxVersion, $stamp, [guid]::NewGuid().ToString('N')) -Encoding UTF8
 
     $userJs = Join-Path $profile 'user.js'
     $userJsContent = if (Test-Path $userJs) { Get-Content -Raw $userJs } else { '' }
