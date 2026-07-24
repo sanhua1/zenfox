@@ -70,7 +70,7 @@ Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Fla
 
 设置界面跟随 Firefox 应用语言：中文语言使用中文，其他语言统一使用英文。
 
-**外观设置** 标签会读写 Sidebery 的 `fontSize`、`density`、`--tabs-activated-fg` 和 `--tabs-activated-bg`。Zenfox 只修改这些允许值，保留 Sidebery 其余设置和自定义 CSS，并在第一次写入前保存原值。
+**外观设置** 标签会读写 Sidebery 的 `fontSize`、`density` 和五组颜色。Sidebery 背景色会同时写入 `--toolbar-bg` 与 `--frame-bg`；其余四组分别对应 `--tabs-normal-fg`、`--tabs-normal-bg`、`--tabs-activated-fg` 和 `--tabs-activated-bg`。Zenfox 只修改这些允许值，保留 Sidebery 其余设置和自定义 CSS，并在第一次写入前保存原值。
 
 全新安装或由 Firefox 同步安装的 Sidebery 即使尚未落盘默认 `settings` 对象，也能正常读取和配置。
 

@@ -66,7 +66,7 @@ The two-row layout is stored in the Firefox preference `zenfox.toolbarRows.v1` a
 
 The settings interface follows Firefox's application language: Chinese locales use Chinese, while all other locales use English.
 
-The **Appearance** tab reads and updates Sidebery's `fontSize`, `density`, `--tabs-activated-fg`, and `--tabs-activated-bg` values. Zenfox changes only these allowlisted values, keeps the rest of Sidebery's settings and custom CSS intact, and saves their original values before the first write.
+The **Appearance** tab reads and updates Sidebery's `fontSize`, `density`, and five color groups. The Sidebery background writes the same value to `--toolbar-bg` and `--frame-bg`; the other groups map to `--tabs-normal-fg`, `--tabs-normal-bg`, `--tabs-activated-fg`, and `--tabs-activated-bg`. Zenfox changes only these allowlisted values, keeps the rest of Sidebery's settings and custom CSS intact, and saves their original values before the first write.
 
 Fresh or Firefox Sync-installed Sidebery profiles are supported even before Sidebery has persisted its default `settings` object.
 

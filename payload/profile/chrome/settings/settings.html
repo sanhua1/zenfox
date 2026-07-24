@@ -21,27 +21,40 @@
         <button type="button" data-settings-tab="appearance" role="tab"></button>
       </nav>
 
-      <section class="settings-card" data-settings-view="quick-actions">
-        <div class="quick-actions-grid">
-          <section>
-            <h2 id="row1-title"></h2>
-            <div id="row1-actions" class="settings-list" data-action-row="row1"></div>
-          </section>
-          <section>
-            <h2 id="row2-title"></h2>
-            <div id="row2-actions" class="settings-list" data-action-row="row2"></div>
-          </section>
-          <section>
-            <h2 id="available-title"></h2>
-            <div id="available-actions" class="settings-list"></div>
-          </section>
+      <section class="settings-card toolbar-layout-card" data-settings-view="quick-actions">
+        <div class="preview-heading">
+          <h2 id="preview-title"></h2>
+          <p id="preview-hint" class="status-text"></p>
         </div>
+        <div class="toolbar-preview-stage">
+          <div id="toolbar-preview" class="toolbar-preview">
+            <div class="toolbar-preview-row" data-drop-zone="row1">
+              <div class="window-controls" aria-hidden="true">
+                <span class="window-control close"></span>
+                <span class="window-control minimize"></span>
+                <span class="window-control maximize"></span>
+              </div>
+              <div id="row1-actions" class="toolbar-action-list"></div>
+            </div>
+            <div class="toolbar-preview-row" data-drop-zone="row2">
+              <div id="row2-actions" class="toolbar-action-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="available-heading">
+          <h2 id="available-title"></h2>
+          <p id="available-hint" class="status-text"></p>
+        </div>
+        <div id="available-actions" class="action-palette" data-drop-zone="available"></div>
       </section>
 
       <section class="settings-card appearance-view" data-settings-view="appearance" hidden>
         <h2>Sidebery</h2>
         <div id="font-size-row" class="appearance-row"></div>
         <div id="density-row" class="appearance-row"></div>
+        <div id="sidebery-background-row" class="appearance-row"></div>
+        <div id="normal-foreground-row" class="appearance-row"></div>
+        <div id="normal-background-row" class="appearance-row"></div>
         <div id="foreground-row" class="appearance-row"></div>
         <div id="background-row" class="appearance-row"></div>
         <p id="sidebery-status" class="status-text"></p>

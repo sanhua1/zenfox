@@ -19,6 +19,12 @@ const DEFAULT_ROW1_ACTION_IDS = [
 const DEFAULT_APPEARANCE = {
   fontSize: "m",
   density: "default",
+  sideberyBackgroundEnabled: false,
+  sideberyBackground: "#1a1a1a",
+  normalForegroundEnabled: false,
+  normalForeground: "rgb(249,249,250)",
+  normalBackgroundEnabled: false,
+  normalBackground: "rgba(255,255,255,0.08)",
   activeForegroundEnabled: false,
   activeForeground: "rgb(255,255,255)",
   activeBackgroundEnabled: false,
@@ -41,6 +47,9 @@ const TEXT = IS_ZH
       row1: "第一行",
       row2: "第二行",
       available: "可添加",
+      previewTitle: "ZenFox 栏预览",
+      previewHint: "拖动图标调整位置；三大金刚固定。",
+      availableHint: "拖入上方添加，拖回这里隐藏。",
       dragSort: "拖拽排序",
       canAdd: "可添加",
       moveUp: "上移",
@@ -61,6 +70,9 @@ const TEXT = IS_ZH
       loose: "宽松",
       foreground: "激活项前景色",
       background: "激活项背景色",
+      sideberyBackground: "Sidebery 背景色",
+      normalForeground: "标签前景色",
+      normalBackground: "标签背景色",
       on: "打开",
       off: "关闭",
       sideberyUnavailable: "无法读取 Sidebery 配置。请确认 Sidebery 已启用。",
@@ -74,6 +86,9 @@ const TEXT = IS_ZH
       row1: "First row",
       row2: "Second row",
       available: "Available",
+      previewTitle: "ZenFox Toolbar Preview",
+      previewHint: "Drag icons to arrange them. Window controls stay fixed.",
+      availableHint: "Drag upward to add; drag back here to hide.",
       dragSort: "Drag to reorder",
       canAdd: "Available to add",
       moveUp: "Move up",
@@ -94,6 +109,9 @@ const TEXT = IS_ZH
       loose: "Relaxed",
       foreground: "Activated foreground",
       background: "Activated background",
+      sideberyBackground: "Sidebery background",
+      normalForeground: "Tab foreground",
+      normalBackground: "Tab background",
       on: "On",
       off: "Off",
       sideberyUnavailable: "Unable to read Sidebery settings. Make sure Sidebery is enabled.",
@@ -106,6 +124,8 @@ let row2Ids = [];
 let appearance = null;
 let appearanceError = "";
 let activeTab = "quick-actions";
+let preview = null;
+let dragState = null;
 
 /** 解析浏览器外壳写入地址片段的配置数据。 */
 function readPageData() {
@@ -144,105 +164,77 @@ function getActionRow(rowName) {
 /** 把按钮移动到指定行和插入位置，同时保证两行不重复。 */
 function moveActionToRow(id, rowName, index = null) {
   if (!id || (rowName !== "row1" && rowName !== "row2")) return;
-  const currentTarget = getActionRow(rowName);
-  const currentIndex = currentTarget.indexOf(id);
-  const adjustedIndex =
-    index !== null && currentIndex >= 0 && currentIndex < index ? index - 1 : index;
   row1Ids = row1Ids.filter((item) => item !== id);
   row2Ids = row2Ids.filter((item) => item !== id);
   const target = getActionRow(rowName);
   const insertAt =
-    adjustedIndex === null
+    index === null
       ? target.length
-      : Math.max(0, Math.min(adjustedIndex, target.length));
+      : Math.max(0, Math.min(index, target.length));
   target.splice(insertAt, 0, id);
   markDirty();
   renderQuickActions();
 }
 
-/** 绘制第一行、第二行和可添加按钮，支持跨行拖拽。 */
+/** 创建仿真栏或按钮托盘中的原生按钮。 */
+function createToolbarAction(item) {
+  const action = document.createElement("button");
+  action.type = "button";
+  action.className = "toolbar-action";
+  action.dataset.widgetId = item.id;
+  action.title = item.label;
+  action.setAttribute("aria-label", item.label);
+
+  if (item.icon) {
+    const icon = document.createElement("img");
+    icon.src = item.icon;
+    icon.alt = "";
+    icon.addEventListener(
+      "error",
+      () => {
+        const fallback = document.createElement("span");
+        fallback.className = "toolbar-action-fallback";
+        fallback.textContent = "·";
+        icon.replaceWith(fallback);
+      },
+      { once: true }
+    );
+    action.append(icon);
+  } else {
+    const fallback = document.createElement("span");
+    fallback.className = "toolbar-action-fallback";
+    fallback.textContent = "·";
+    action.append(fallback);
+  }
+
+  const label = document.createElement("span");
+  label.className = "toolbar-action-label";
+  label.textContent = item.label;
+  action.append(label);
+  return action;
+}
+
+/** 绘制两行 ZenFox 仿真栏和可添加按钮托盘。 */
 function renderQuickActions() {
   const row1List = document.querySelector("#row1-actions");
   const row2List = document.querySelector("#row2-actions");
   const availableList = document.querySelector("#available-actions");
+  const previewNode = document.querySelector("#toolbar-preview");
   row1List.replaceChildren();
   row2List.replaceChildren();
   availableList.replaceChildren();
+
+  if (previewNode && preview) {
+    previewNode.style.setProperty("--preview-width", `${preview.width || 307}px`);
+    previewNode.style.setProperty("--preview-background", preview.background || "#1a1a1a");
+    previewNode.style.setProperty("--preview-foreground", preview.foreground || "#f9f9fa");
+    previewNode.style.setProperty("--preview-border", preview.border || "rgba(255,255,255,.12)");
+  }
+
   const candidateMap = new Map(candidates.map((item) => [item.id, item]));
-
-  const createRow = (item, rowName = "", index = -1) => {
-    const enabled = rowName === "row1" || rowName === "row2";
-    const rowIds = enabled ? getActionRow(rowName) : [];
-    const row = document.createElement("div");
-    row.className = "settings-row";
-    row.dataset.widgetId = item.id;
-    if (enabled) row.dataset.actionRow = rowName;
-    row.draggable = enabled;
-
-    const handle = document.createElement("span");
-    handle.className = "row-handle";
-    handle.title = enabled ? TEXT.dragSort : TEXT.canAdd;
-    if (item.icon) {
-      const icon = document.createElement("img");
-      icon.className = "row-icon";
-      icon.src = item.icon;
-      icon.alt = "";
-      icon.addEventListener(
-        "error",
-        () => handle.replaceChildren(enabled ? "⋮⋮" : "+"),
-        { once: true }
-      );
-      handle.append(icon);
-    } else {
-      handle.textContent = enabled ? "⋮⋮" : "+";
-    }
-
-    const text = document.createElement("span");
-    text.className = "row-text";
-    const label = document.createElement("strong");
-    label.textContent = item.label;
-    const id = document.createElement("small");
-    id.textContent = item.id;
-    text.append(label, id);
-
-    const actions = document.createElement("span");
-    actions.className = "row-actions";
-    if (enabled) {
-      const up = makeButton("↑", "up", TEXT.moveUp);
-      const down = makeButton("↓", "down", TEXT.moveDown);
-      const other = makeButton("⇄", "other-row", TEXT.moveOtherRow);
-      up.disabled = index === 0;
-      down.disabled = index === rowIds.length - 1;
-      actions.append(up, down, other, makeButton(TEXT.hide, "hide"));
-    } else {
-      actions.append(
-        makeButton(TEXT.row1, "add-row1"),
-        makeButton(TEXT.row2, "add-row2")
-      );
-    }
-    row.append(handle, text, actions);
-
-    if (enabled) {
-      row.addEventListener("dragstart", (event) => {
-        event.dataTransfer?.setData("text/plain", item.id);
-        row.classList.add("dragging");
-      });
-      row.addEventListener("dragend", () => row.classList.remove("dragging"));
-      row.addEventListener("dragover", (event) => event.preventDefault());
-      row.addEventListener("drop", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const sourceId = event.dataTransfer?.getData("text/plain");
-        if (!sourceId || sourceId === item.id) return;
-        moveActionToRow(sourceId, rowName, getActionRow(rowName).indexOf(item.id));
-      });
-    }
-    return row;
-  };
-
-  const renderEnabledRow = (list, ids, rowName, emptyText) => {
-    ids.forEach((id, index) => {
-      list.append(createRow(candidateMap.get(id) || { id, label: id }, rowName, index));
+  const renderRow = (list, ids, emptyText) => {
+    ids.forEach((id) => {
+      list.append(createToolbarAction(candidateMap.get(id) || { id, label: id }));
     });
     if (!ids.length) {
       const empty = document.createElement("p");
@@ -251,20 +243,144 @@ function renderQuickActions() {
       list.append(empty);
     }
   };
-  renderEnabledRow(row1List, row1Ids, "row1", TEXT.emptyRow1);
-  renderEnabledRow(row2List, row2Ids, "row2", TEXT.emptyRow2);
+  renderRow(row1List, row1Ids, TEXT.emptyRow1);
+  renderRow(row2List, row2Ids, TEXT.emptyRow2);
 
   const enabledIds = new Set([...row1Ids, ...row2Ids]);
   const available = candidates
     .filter((item) => !enabledIds.has(item.id))
     .sort((a, b) => a.label.localeCompare(b.label, IS_ZH ? "zh-CN" : "en"));
-  available.forEach((item) => availableList.append(createRow(item)));
+  available.forEach((item) => availableList.append(createToolbarAction(item)));
   if (!available.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
     empty.textContent = TEXT.emptyAvailable;
     availableList.append(empty);
   }
+}
+
+/** 返回放置区域中真正承载按钮的弹性容器。 */
+function getDropContainer(zone) {
+  if (!zone) return null;
+  switch (zone.dataset.dropZone) {
+    case "row1":
+      return document.querySelector("#row1-actions");
+    case "row2":
+      return document.querySelector("#row2-actions");
+    case "available":
+      return document.querySelector("#available-actions");
+    default:
+      return null;
+  }
+}
+
+/** 根据指针位置找到占位块应插入的按钮之前。 */
+function findDropReference(container, clientX, clientY) {
+  const actions = Array.from(container.querySelectorAll(":scope > .toolbar-action"));
+  for (const action of actions) {
+    const rect = action.getBoundingClientRect();
+    if (!container.classList.contains("action-palette")) {
+      if (clientX < rect.left + rect.width / 2) return action;
+      continue;
+    }
+    if (clientY < rect.top + rect.height / 2) return action;
+    if (clientY <= rect.bottom && clientX < rect.left + rect.width / 2) return action;
+  }
+  return null;
+}
+
+/** 用 FLIP 位移动画让占位块周围的按钮平滑让位。 */
+function moveDragPlaceholder(container, reference) {
+  if (!dragState || !container) return;
+  const actions = Array.from(document.querySelectorAll(".toolbar-action"));
+  const before = new Map(actions.map((action) => [action, action.getBoundingClientRect()]));
+  container.insertBefore(dragState.placeholder, reference);
+  for (const action of actions) {
+    if (!action.isConnected) continue;
+    const first = before.get(action);
+    const last = action.getBoundingClientRect();
+    const deltaX = first.left - last.left;
+    const deltaY = first.top - last.top;
+    if (deltaX || deltaY) {
+      action.animate(
+        [{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: "translate(0, 0)" }],
+        { duration: 150, easing: "cubic-bezier(.2,.8,.2,1)" }
+      );
+    }
+  }
+}
+
+/** 开始 Pointer Events 拖拽，并用浮动图标跟随指针。 */
+function beginActionDrag(event) {
+  if (dragState || event.button !== 0) return;
+  const action = event.target.closest?.(".toolbar-action");
+  const sourceZoneNode = action?.closest?.("[data-drop-zone]");
+  const sourceZone = sourceZoneNode?.dataset.dropZone;
+  if (!action || !sourceZone) return;
+  event.preventDefault();
+
+  const placeholder = document.createElement("span");
+  placeholder.className = "drag-placeholder";
+  action.replaceWith(placeholder);
+  const ghost = action.cloneNode(true);
+  ghost.classList.add("drag-ghost");
+  document.body.append(ghost);
+  dragState = {
+    pointerId: event.pointerId,
+    id: action.dataset.widgetId,
+    sourceZone,
+    placeholder,
+    ghost,
+    activeZone: sourceZoneNode,
+  };
+  document.body.classList.add("is-dragging");
+  updateActionDrag(event);
+}
+
+/** 更新浮动图标、命中区域和实时占位位置。 */
+function updateActionDrag(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  dragState.ghost.style.left = `${event.clientX}px`;
+  dragState.ghost.style.top = `${event.clientY}px`;
+  document.querySelectorAll(".drop-active").forEach((node) => node.classList.remove("drop-active"));
+  const zone = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-drop-zone]");
+  dragState.activeZone = zone || null;
+  if (!zone) return;
+  zone.classList.add("drop-active");
+  const container = getDropContainer(zone);
+  const reference = findDropReference(container, event.clientX, event.clientY);
+  if (dragState.placeholder.parentNode !== container || dragState.placeholder.nextSibling !== reference) {
+    moveDragPlaceholder(container, reference);
+  }
+}
+
+/** 结束拖拽，把占位位置写回现有双行配置草稿。 */
+function finishActionDrag(event, cancelled = false) {
+  if (!dragState || (event && event.pointerId !== dragState.pointerId)) return;
+  const { id, sourceZone, placeholder, ghost, activeZone } = dragState;
+  const targetZone = cancelled ? "" : activeZone?.dataset.dropZone || "";
+  const container = placeholder.parentNode;
+  const targetIndex = container
+    ? Array.from(container.children).filter((node) =>
+        node.matches?.(".toolbar-action, .drag-placeholder")
+      ).indexOf(placeholder)
+    : -1;
+
+  dragState = null;
+  ghost.remove();
+  document.body.classList.remove("is-dragging");
+  document.querySelectorAll(".drop-active").forEach((node) => node.classList.remove("drop-active"));
+
+  if (targetZone === "row1" || targetZone === "row2") {
+    moveActionToRow(id, targetZone, Math.max(0, targetIndex));
+    return;
+  }
+  if (targetZone === "available" && sourceZone !== "available") {
+    row1Ids = row1Ids.filter((item) => item !== id);
+    row2Ids = row2Ids.filter((item) => item !== id);
+    markDirty();
+  }
+  renderQuickActions();
 }
 
 /** 将 CSS 颜色转换为颜色选择器接受的十六进制值。 */
@@ -344,6 +460,9 @@ function renderColorRow(selector, label, field) {
 function renderAppearance() {
   renderOptionRow("#font-size-row", TEXT.fontSize, "fontSize", FONT_SIZES, FONT_SIZES.map((v) => v.toUpperCase()));
   renderOptionRow("#density-row", TEXT.density, "density", DENSITIES, [TEXT.compact, TEXT.normal, TEXT.loose]);
+  renderColorRow("#sidebery-background-row", TEXT.sideberyBackground, "sideberyBackground");
+  renderColorRow("#normal-foreground-row", TEXT.normalForeground, "normalForeground");
+  renderColorRow("#normal-background-row", TEXT.normalBackground, "normalBackground");
   renderColorRow("#foreground-row", TEXT.foreground, "activeForeground");
   renderColorRow("#background-row", TEXT.background, "activeBackground");
 
@@ -389,41 +508,6 @@ function handleClick(event) {
     appearance = { ...appearance, [`${field}Enabled`]: !appearance[`${field}Enabled`] };
     markDirty();
     renderAppearance();
-    return;
-  }
-
-  const actionButton = event.target.closest?.("[data-action]");
-  if (actionButton) {
-    const itemRow = actionButton.closest(".settings-row");
-    const id = itemRow?.dataset.widgetId;
-    const rowName = itemRow?.dataset.actionRow;
-    const rowIds = rowName ? getActionRow(rowName) : [];
-    const index = rowIds.indexOf(id);
-    switch (actionButton.dataset.action) {
-      case "up":
-        if (index > 0) [rowIds[index - 1], rowIds[index]] = [rowIds[index], rowIds[index - 1]];
-        break;
-      case "down":
-        if (index >= 0 && index < rowIds.length - 1)
-          [rowIds[index], rowIds[index + 1]] = [rowIds[index + 1], rowIds[index]];
-        break;
-      case "other-row":
-        moveActionToRow(id, rowName === "row1" ? "row2" : "row1");
-        return;
-      case "hide":
-        if (index >= 0) rowIds.splice(index, 1);
-        break;
-      case "add-row1":
-        moveActionToRow(id, "row1");
-        return;
-      case "add-row2":
-        moveActionToRow(id, "row2");
-        return;
-      default:
-        return;
-    }
-    markDirty();
-    renderQuickActions();
     return;
   }
 
@@ -481,6 +565,7 @@ function applyPageData(pageData) {
   row2Ids = Array.from(state.rows?.row2 || DEFAULT_QUICK_ACTION_IDS);
   appearance = state.appearance ? { ...state.appearance } : null;
   appearanceError = state.appearanceError || "";
+  preview = state.preview ? { ...state.preview } : null;
   renderQuickActions();
   renderAppearance();
 
@@ -505,23 +590,23 @@ async function init() {
   document.querySelector("#page-subtitle").textContent = TEXT.subtitle;
   document.querySelector('[data-settings-tab="quick-actions"]').textContent = TEXT.quickActions;
   document.querySelector('[data-settings-tab="appearance"]').textContent = TEXT.appearance;
-  document.querySelector("#row1-title").textContent = TEXT.row1;
-  document.querySelector("#row2-title").textContent = TEXT.row2;
+  document.querySelector("#preview-title").textContent = TEXT.previewTitle;
+  document.querySelector("#preview-hint").textContent = TEXT.previewHint;
   document.querySelector("#available-title").textContent = TEXT.available;
+  document.querySelector("#available-hint").textContent = TEXT.availableHint;
   document.querySelector("#reset-button").textContent = TEXT.reset;
   document.querySelector("#apply-button").textContent = TEXT.apply;
 
   document.addEventListener("click", handleClick);
   document.addEventListener("input", handleInput);
-  document.querySelector("#apply-button").addEventListener("click", applySettings);
-  document.querySelectorAll("[data-action-row]").forEach((list) => {
-    list.addEventListener("dragover", (event) => event.preventDefault());
-    list.addEventListener("drop", (event) => {
-      event.preventDefault();
-      const id = event.dataTransfer?.getData("text/plain");
-      if (id) moveActionToRow(id, list.dataset.actionRow);
-    });
+  document.addEventListener("pointerdown", beginActionDrag);
+  window.addEventListener("pointermove", updateActionDrag);
+  window.addEventListener("pointerup", (event) => finishActionDrag(event));
+  window.addEventListener("pointercancel", (event) => finishActionDrag(event, true));
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && dragState) finishActionDrag(null, true);
   });
+  document.querySelector("#apply-button").addEventListener("click", applySettings);
   window.addEventListener("hashchange", () => {
     const pageData = readPageData();
     if (pageData) applyPageData(pageData);

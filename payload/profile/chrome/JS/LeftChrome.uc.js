@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.39 — guarded toolbar context menu
-// @version         0.5.39
+// @description     PLAN.md v0.5.42 — expanded Sidebery color controls
+// @version         0.5.42
 // @author          local
 // ==/UserScript==
 
@@ -63,6 +63,9 @@
  *   v0.5.37 shows each native action's real icon in the settings page.
  *   v0.5.38 closes stale settings tabs before opening a fresh one.
  *   v0.5.39 hides Firefox's toolbar customization entry to prevent misclicks.
+ *   v0.5.40 resolves icons for unused native actions with hidden preview nodes.
+ *   v0.5.41 adds the live two-row toolbar preview used by the settings editor.
+ *   v0.5.42 exposes Sidebery frame, normal-tab, and activated-tab colors.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -127,6 +130,9 @@
         densityCompact: "紧凑",
         densityDefault: "默认",
         densityLoose: "宽松",
+        sideberyBackground: "Sidebery 背景色",
+        normalForeground: "标签前景色",
+        normalBackground: "标签背景色",
         activatedForeground: "激活项前景色",
         activatedBackground: "激活项背景色",
         enabled: "打开",
@@ -160,6 +166,9 @@
         densityCompact: "Compact",
         densityDefault: "Default",
         densityLoose: "Relaxed",
+        sideberyBackground: "Sidebery background",
+        normalForeground: "Tab foreground",
+        normalBackground: "Tab background",
         activatedForeground: "Activated foreground",
         activatedBackground: "Activated background",
         enabled: "On",
@@ -172,8 +181,18 @@
   const SIDEBERY_FONT_SIZES = ["xxs", "xs", "s", "m", "l", "xl", "xxl"];
   const SIDEBERY_DENSITIES = ["compact", "default", "loose"];
   const SIDEBERY_COLOR_RULES = {
-    activeForeground: "--tabs-activated-fg",
-    activeBackground: "--tabs-activated-bg",
+    sideberyBackground: ["--frame-bg", "--toolbar-bg"],
+    normalForeground: ["--tabs-normal-fg"],
+    normalBackground: ["--tabs-normal-bg"],
+    activeForeground: ["--tabs-activated-fg"],
+    activeBackground: ["--tabs-activated-bg"],
+  };
+  const SIDEBERY_COLOR_DEFAULTS = {
+    sideberyBackground: "#1a1a1a",
+    normalForeground: "rgb(249,249,250)",
+    normalBackground: "rgba(255,255,255,0.08)",
+    activeForeground: "rgb(255,255,255)",
+    activeBackground: "#f20006ff",
   };
 
   const CFG = {
@@ -784,27 +803,23 @@
     const settings =
       stored?.settings && typeof stored.settings === "object" ? stored.settings : {};
     const sidebarCSS = typeof stored.sidebarCSS === "string" ? stored.sidebarCSS : "";
-    const activeForeground = getSideberyCssRule(
-      sidebarCSS,
-      SIDEBERY_COLOR_RULES.activeForeground
-    );
-    const activeBackground = getSideberyCssRule(
-      sidebarCSS,
-      SIDEBERY_COLOR_RULES.activeBackground
-    );
-    return {
+    const result = {
       fontSize: SIDEBERY_FONT_SIZES.includes(settings.fontSize)
         ? settings.fontSize
         : "m",
       density: SIDEBERY_DENSITIES.includes(settings.density)
         ? settings.density
         : "default",
-      activeForegroundEnabled: !!activeForeground,
-      activeForeground: activeForeground || "rgb(255,255,255)",
-      activeBackgroundEnabled: !!activeBackground,
-      activeBackground: activeBackground || "#f20006ff",
       version: storage.extension.manifest?.version || "unknown",
     };
+    for (const [field, cssVars] of Object.entries(SIDEBERY_COLOR_RULES)) {
+      const value = cssVars
+        .map((cssVar) => getSideberyCssRule(sidebarCSS, cssVar))
+        .find(Boolean);
+      result[`${field}Enabled`] = !!value;
+      result[field] = value || SIDEBERY_COLOR_DEFAULTS[field];
+    }
+    return result;
   }
 
   /**
@@ -871,18 +886,17 @@
       ServicesApi?.prefs?.setStringPref(PREF_SIDEBERY_CSS_BACKUP, sidebarCSS);
     }
 
-    let nextSidebarCSS = setSideberyCssRule(
-      sidebarCSS,
-      SIDEBERY_COLOR_RULES.activeForeground,
-      !!appearance.activeForegroundEnabled,
-      appearance.activeForeground
-    );
-    nextSidebarCSS = setSideberyCssRule(
-      nextSidebarCSS,
-      SIDEBERY_COLOR_RULES.activeBackground,
-      !!appearance.activeBackgroundEnabled,
-      appearance.activeBackground
-    );
+    let nextSidebarCSS = sidebarCSS;
+    for (const [field, cssVars] of Object.entries(SIDEBERY_COLOR_RULES)) {
+      for (const cssVar of cssVars) {
+        nextSidebarCSS = setSideberyCssRule(
+          nextSidebarCSS,
+          cssVar,
+          !!appearance[`${field}Enabled`],
+          appearance[field]
+        );
+      }
+    }
 
     await storage.set({
       settings: {
@@ -944,18 +958,18 @@
     });
   }
 
-  /** 从 CSS URL 或节点属性中提取可供设置页加载的内部图标地址。 */
+  /** 从 CSS URL 或节点属性中提取可供设置页加载的图标地址。 */
   function normalizeToolbarIcon(value) {
     const text = String(value || "").trim();
     const url = /url\(\s*["']?([^"')]+)["']?\s*\)/i.exec(text)?.[1] || text;
-    return /^(?:chrome|resource|data|moz-extension):/i.test(url) ? url : "";
+    return /^(?:chrome|resource|data|moz-extension|https):/i.test(url) ? url : "";
   }
 
-  /** 读取真实工具栏节点及其图标子节点当前使用的图标。 */
-  function getToolbarActionIcon(node) {
+  /** 读取工具栏节点及其图标子节点当前使用的图标。 */
+  function readToolbarActionIcon(node) {
     if (!node) return "";
     const iconNode = node.querySelector?.(
-      ".toolbarbutton-icon, .toolbarbutton-badge-stack .toolbarbutton-icon"
+      "#fxa-avatar-image, .toolbarbutton-icon, .toolbarbutton-badge-stack .toolbarbutton-icon"
     );
     for (const candidate of [iconNode, node]) {
       if (!candidate) continue;
@@ -981,6 +995,44 @@
       } catch (_) {}
     }
     return "";
+  }
+
+  /**
+   * 创建不参与工具栏布局的临时原生按钮。
+   * 让 Firefox 按按钮 ID 应用内置图标样式。
+   */
+  function probeToolbarActionIcon(id) {
+    if (!id || !doc.createXULElement) return "";
+
+    let host = $("uc-zenfox-icon-probe-host");
+    if (!host) {
+      host = doc.createXULElement("hbox");
+      host.id = "uc-zenfox-icon-probe-host";
+      host.style.setProperty("display", "none", "important");
+      doc.documentElement.appendChild(host);
+    }
+
+    const probe = doc.createXULElement("toolbarbutton");
+    probe.id = id;
+    probe.className = "toolbarbutton-1 chromeclass-toolbar-additional";
+    probe.setAttribute("cui-areatype", "toolbar");
+
+    const iconNode = doc.createXULElement("image");
+    iconNode.className = "toolbarbutton-icon";
+    probe.appendChild(iconNode);
+    host.appendChild(probe);
+
+    try {
+      win.getComputedStyle(probe).listStyleImage;
+      return readToolbarActionIcon(probe);
+    } finally {
+      probe.remove();
+    }
+  }
+
+  /** 优先读取真实节点；未放入工具栏时用隐藏预览节点解析原生图标。 */
+  function getToolbarActionIcon(node, id = node?.id || "") {
+    return readToolbarActionIcon(node) || probeToolbarActionIcon(id);
   }
 
   /** Collect built-in, single-button CUI widgets that fit the quick row. */
@@ -1026,7 +1078,7 @@
       candidates.set(id, {
         id,
         label: String(label),
-        icon: getToolbarActionIcon(node),
+        icon: getToolbarActionIcon(node, id),
       });
     };
 
@@ -1059,7 +1111,7 @@
         candidates.set(id, {
           id,
           label: QUICK_ACTION_LABELS[id] || id,
-          icon: getToolbarActionIcon(node),
+          icon: getToolbarActionIcon(node, id),
         });
       }
     }
@@ -1353,6 +1405,18 @@
         TEXT.densityLoose,
       ])
     );
+    const sideberyBackgroundRow = makeSideberyColorRow(
+      TEXT.sideberyBackground,
+      "sideberyBackground"
+    );
+    const normalForegroundRow = makeSideberyColorRow(
+      TEXT.normalForeground,
+      "normalForeground"
+    );
+    const normalBackgroundRow = makeSideberyColorRow(
+      TEXT.normalBackground,
+      "normalBackground"
+    );
     const activeForegroundRow = makeSideberyColorRow(
       TEXT.activatedForeground,
       "activeForeground"
@@ -1367,6 +1431,9 @@
       sideberyTitle,
       fontRow,
       densityRow,
+      sideberyBackgroundRow,
+      normalForegroundRow,
+      normalBackgroundRow,
       activeForegroundRow,
       activeBackgroundRow,
       sideberyStatus
@@ -1445,10 +1512,16 @@
             overlay.__ucSideberyAppearance = {
               fontSize: "m",
               density: "default",
+              sideberyBackgroundEnabled: false,
+              sideberyBackground: SIDEBERY_COLOR_DEFAULTS.sideberyBackground,
+              normalForegroundEnabled: false,
+              normalForeground: SIDEBERY_COLOR_DEFAULTS.normalForeground,
+              normalBackgroundEnabled: false,
+              normalBackground: SIDEBERY_COLOR_DEFAULTS.normalBackground,
               activeForegroundEnabled: false,
-              activeForeground: "rgb(255,255,255)",
+              activeForeground: SIDEBERY_COLOR_DEFAULTS.activeForeground,
               activeBackgroundEnabled: false,
-              activeBackground: "#f20006ff",
+              activeBackground: SIDEBERY_COLOR_DEFAULTS.activeBackground,
             };
             renderSideberyAppearance(overlay);
             return;
@@ -1527,6 +1600,27 @@
       });
   }
 
+  /** 读取当前 ZenFox 栏宽度和 Firefox 主题颜色供设置页仿真。 */
+  function readToolbarPreview() {
+    const host = $("uc-left-host") || $("nav-bar");
+    const rootStyle = win.getComputedStyle(root);
+    const hostStyle = host ? win.getComputedStyle(host) : rootStyle;
+    const measuredWidth = Math.round(host?.getBoundingClientRect?.().width || 0);
+    const background =
+      hostStyle.backgroundColor !== "rgba(0, 0, 0, 0)"
+        ? hostStyle.backgroundColor
+        : rootStyle.getPropertyValue("--toolbar-bgcolor").trim();
+    const foreground =
+      hostStyle.color || rootStyle.getPropertyValue("--toolbar-color").trim();
+    const border = rootStyle.getPropertyValue("--chrome-content-separator-color").trim();
+    return {
+      width: measuredWidth || CFG.defaultWidth,
+      background: background || "#1a1a1a",
+      foreground: foreground || "#f9f9fa",
+      border: border || "rgba(255,255,255,.12)",
+    };
+  }
+
   /**
    * 向独立设置页提供受控的数据接口
    * 保存后刷新所有已打开的 Firefox 窗口
@@ -1547,6 +1641,7 @@
           isZh: IS_ZH,
           candidates: collectQuickActionCandidates(),
           rows: readToolbarRows(),
+          preview: readToolbarPreview(),
           appearance,
           appearanceError,
         });
@@ -2278,7 +2373,7 @@
       bindTabSync();
       ensureSideberySidebar();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.39 (guarded toolbar context menu; Sidebery selected)");
+      logAlways("ready v0.5.41 (simulated toolbar editor; Sidebery selected)");
     };
 
     if ($("nav-bar")) boot();
