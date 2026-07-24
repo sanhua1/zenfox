@@ -70,7 +70,9 @@ Linux 支持原生软件包或 Mozilla 压缩包版本的 Firefox。Snap 和 Fla
 
 设置界面跟随 Firefox 应用语言：中文语言使用中文，其他语言统一使用英文。
 
-**外观设置** 标签会读写 Sidebery 的 `fontSize`、`density` 和五组颜色。Sidebery 背景色会同时写入 `--toolbar-bg` 与 `--frame-bg`；其余四组分别对应 `--tabs-normal-fg`、`--tabs-normal-bg`、`--tabs-activated-fg` 和 `--tabs-activated-bg`。Zenfox 只修改这些允许值，保留 Sidebery 其余设置和自定义 CSS，并在第一次写入前保存原值。
+**外观设置** 标签会读写 Sidebery 的 `fontSize`、`density` 和十一组颜色。主体、工具栏、普通标签、激活标签、搜索框和弹窗颜色可以分别调整。工具栏前景色会在面板内联颜色之后直接覆盖导航 SVG 的填充色；搜索颜色只作用于 `.SearchBar`；弹窗颜色使用 Sidebery 的 `--s-popup-bg` 与 `--s-popup-fg`；激活项背景色还会通过 `--scroll-color` 控制原生滚动条滑块。Zenfox 只修改这些允许规则，保留 Sidebery 其余设置和自定义 CSS，并在第一次写入前保存原值。
+
+每次安装后的首次启动，Zenfox 会把 Firefox Color 基础设置中的 `frame`、`toolbar`、`tab_background_text`、`toolbar_field`、`toolbar_field_text`、`tab_line`、`popup` 和 `popup_text` 映射到 Sidebery 对应区域。Sidebery 工具栏前景色跟随 Firefox 工具栏最终显示的前景色，`toolbar_text` 只作回退。普通标签和激活标签文字都跟随 `tab_background_text`。之后可以手动调整；Firefox 主题变化时，Zenfox 会按新主题重新覆盖。透明颜色会回退到语义最接近的背景色或前景色。
 
 全新安装或由 Firefox 同步安装的 Sidebery 即使尚未落盘默认 `settings` 对象，也能正常读取和配置。
 

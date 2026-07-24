@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.42 — expanded Sidebery color controls
-// @version         0.5.42
+// @description     PLAN.md v0.5.73 — captured live Firefox theme data
+// @version         0.5.73
 // @author          local
 // ==/UserScript==
 
 /**
  * Layout strategy:
  *   Row1 XUL hbox: lights + account + hamburger + back + forward + reload
- *   Quick row XUL hbox: extensions + downloads + bookmarks + history +
- *                       logins + developer tools + settings
+ *   Quick row XUL hbox: downloads + bookmarks + history + logins +
+ *                       developer tools + settings
  *   Row2 XUL hbox: REAL #urlbar-container (identity lock, Places autocomplete,
  *                  star, page actions) — constrained to left chrome width
  *   Row3 XUL hbox: extension toolbar buttons only
@@ -66,6 +66,37 @@
  *   v0.5.40 resolves icons for unused native actions with hidden preview nodes.
  *   v0.5.41 adds the live two-row toolbar preview used by the settings editor.
  *   v0.5.42 exposes Sidebery frame, normal-tab, and activated-tab colors.
+ *   v0.5.43 syncs Sidebery colors after installation and Firefox theme changes.
+ *   v0.5.44 keeps Sidebery toolbar and scrollbar colors with the tab foreground.
+ *   v0.5.45 derives the activated background from Firefox's theme attention color.
+ *   v0.5.46 rejects transparent toolbar colors and samples the painted toolbox.
+ *   v0.5.47 aligns the unfocused URL bar with the final ZenFox foreground.
+ *   v0.5.48 keeps URL bar and Sidebery navigation icons on the same foreground.
+ *   v0.5.49 targets the actual URL SVGs and Sidebery bottom-bar foreground.
+ *   v0.5.50 preserves Firefox foregrounds inside URL bar buttons with light fills.
+ *   v0.5.51 aligns extension identity buttons with the compact URL bar surface.
+ *   v0.5.52 pins the tracking-protection SVG to the compact URL bar foreground.
+ *   v0.5.53 also pins Firefox 152's new trust shield to that foreground.
+ *   v0.5.54 aligns Firefox internal-page identity chips with the compact URL bar.
+ *   v0.5.55 drives every native URL bar chip through Firefox's shared palette.
+ *   v0.5.56 paints the native sidebar splitter with the shared ZenFox palette.
+ *   v0.5.57 maps Firefox's tab_line theme color to Sidebery's activated background.
+ *   v0.5.58 maps Sidebery's native scrollbar thumb to the same tab highlight.
+ *   v0.5.59 maps every Firefox Color basic color to its Sidebery counterpart.
+ *   v0.5.60 keeps activated and normal tab text on the same Firefox theme color.
+ *   v0.5.61 keeps Sidebery navigation icons on the toolbar foreground.
+ *   v0.5.62 overrides navigation SVG fill after panel inline colors are applied.
+ *   v0.5.63 samples the toolbar's painted foreground before raw theme tokens.
+ *   v0.5.64 pins the unified extensions button first in the extension row.
+ *   v0.5.65 resolves ZenFox colors from the painted Firefox toolbar palette.
+ *   v0.5.66 keeps ZenFox and Sidebery chrome on the shared frame background.
+ *   v0.5.67 reads only the nine basic Firefox theme colors.
+ *   v0.5.68 derives a visible tab highlight when built-in themes omit tab_line.
+ *   v0.5.69 removes bright native borders from the sidebar boundary.
+ *   v0.5.70 prefers live Firefox Color values over the stored theme manifest.
+ *   v0.5.71 keeps Sidebery's selected border with the active tab background.
+ *   v0.5.72 maps Sidebery's actual active-element border to the tab highlight.
+ *   v0.5.73 captures live Firefox Color values from the theme update event.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -82,6 +113,8 @@
   const PREF_TOOLBAR_ROWS = "zenfox.toolbarRows.v1";
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
+  const PREF_SIDEBERY_THEME_SYNC = "zenfox.sideberyThemeSync.v1";
+  const ZENFOX_VERSION = "0.5.73";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
@@ -130,11 +163,17 @@
         densityCompact: "紧凑",
         densityDefault: "默认",
         densityLoose: "宽松",
-        sideberyBackground: "Sidebery 背景色",
+        sideberyBackground: "主体背景色",
+        toolbarBackground: "工具栏背景色",
+        toolbarForeground: "工具栏前景色",
         normalForeground: "标签前景色",
         normalBackground: "标签背景色",
         activatedForeground: "激活项前景色",
         activatedBackground: "激活项背景色",
+        searchBackground: "搜索框背景色",
+        searchForeground: "搜索框前景色",
+        popupBackground: "弹窗背景色",
+        popupForeground: "弹窗前景色",
         enabled: "打开",
         disabled: "关闭",
         sideberyLoading: "正在读取 Sidebery 配置…",
@@ -166,11 +205,17 @@
         densityCompact: "Compact",
         densityDefault: "Default",
         densityLoose: "Relaxed",
-        sideberyBackground: "Sidebery background",
+        sideberyBackground: "Frame background",
+        toolbarBackground: "Toolbar background",
+        toolbarForeground: "Toolbar foreground",
         normalForeground: "Tab foreground",
         normalBackground: "Tab background",
         activatedForeground: "Activated foreground",
         activatedBackground: "Activated background",
+        searchBackground: "Search background",
+        searchForeground: "Search foreground",
+        popupBackground: "Popup background",
+        popupForeground: "Popup foreground",
         enabled: "On",
         disabled: "Off",
         sideberyLoading: "Loading Sidebery settings…",
@@ -181,18 +226,47 @@
   const SIDEBERY_FONT_SIZES = ["xxs", "xs", "s", "m", "l", "xl", "xxl"];
   const SIDEBERY_DENSITIES = ["compact", "default", "loose"];
   const SIDEBERY_COLOR_RULES = {
-    sideberyBackground: ["--frame-bg", "--toolbar-bg"],
-    normalForeground: ["--tabs-normal-fg"],
+    sideberyBackground: ["--frame-bg"],
+    toolbarBackground: ["--toolbar-bg"],
+    toolbarForeground: [
+      "--toolbar-fg",
+      "--nav-btn-fg",
+      { selector: "#root.root .NavigationBar .nav-item", cssVar: "--color" },
+      {
+        selector: "#root.root .NavigationBar .nav-item .icon",
+        cssVar: "fill",
+      },
+    ],
+    normalForeground: ["--tabs-normal-fg", "--frame-fg"],
     normalBackground: ["--tabs-normal-bg"],
     activeForeground: ["--tabs-activated-fg"],
-    activeBackground: ["--tabs-activated-bg"],
+    activeBackground: [
+      "--tabs-activated-bg",
+      "--s-act-el-border",
+      "--frame-el-overlay-selected-border",
+      "--scroll-color",
+    ],
+    searchBackground: [
+      { selector: "#root.root .SearchBar", cssVar: "--toolbar-bg" },
+    ],
+    searchForeground: [
+      { selector: "#root.root .SearchBar", cssVar: "--toolbar-fg" },
+    ],
+    popupBackground: ["--s-popup-bg"],
+    popupForeground: ["--s-popup-fg"],
   };
   const SIDEBERY_COLOR_DEFAULTS = {
     sideberyBackground: "#1a1a1a",
+    toolbarBackground: "#1a1a1a",
+    toolbarForeground: "rgb(249,249,250)",
     normalForeground: "rgb(249,249,250)",
-    normalBackground: "rgba(255,255,255,0.08)",
+    normalBackground: "#1a1a1a",
     activeForeground: "rgb(255,255,255)",
     activeBackground: "#f20006ff",
+    searchBackground: "#1a1a1a",
+    searchForeground: "rgb(249,249,250)",
+    popupBackground: "#1a1a1a",
+    popupForeground: "rgb(249,249,250)",
   };
 
   const CFG = {
@@ -201,7 +275,6 @@
   };
 
   const DEFAULT_QUICK_ACTION_IDS = [
-    "unified-extensions-button",
     "downloads-button",
     "bookmarks-menu-button",
     "history-panelmenu",
@@ -242,7 +315,6 @@
         "back-button": "后退",
         "forward-button": "前进",
         "stop-reload-button": "刷新",
-        "unified-extensions-button": "扩展",
         "downloads-button": "下载",
         "bookmarks-menu-button": "书签",
         "history-panelmenu": "历史记录",
@@ -268,7 +340,6 @@
         "back-button": "Back",
         "forward-button": "Forward",
         "stop-reload-button": "Reload",
-        "unified-extensions-button": "Extensions",
         "downloads-button": "Downloads",
         "bookmarks-menu-button": "Bookmarks",
         "history-panelmenu": "History",
@@ -290,6 +361,7 @@
       };
 
   const QUICK_ACTION_EXCLUDED_IDS = new Set([
+    "unified-extensions-button",
     "urlbar-container",
     "reload-button",
     "stop-button",
@@ -707,6 +779,12 @@
           (id) => !row1Set.has(id)
         );
         if (Array.isArray(stored?.row1) && Array.isArray(stored?.row2)) {
+          if (
+            JSON.stringify(stored.row1) !== JSON.stringify(row1) ||
+            JSON.stringify(stored.row2) !== JSON.stringify(row2)
+          ) {
+            saveToolbarRows(row1, row2);
+          }
           return { row1, row2 };
         }
       }
@@ -771,18 +849,32 @@
     };
   }
 
-  function getSideberyCssRule(css, cssVar) {
+  /** 统一根变量和局部变量的 Sidebery 自定义 CSS 描述。 */
+  function normalizeSideberyCssRule(rule) {
+    return typeof rule === "string"
+      ? { selector: "#root.root", cssVar: rule }
+      : rule;
+  }
+
+  /** 转义动态 CSS 选择器和变量名，供精确规则匹配使用。 */
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function getSideberyCssRule(css, rule) {
+    const { selector, cssVar } = normalizeSideberyCssRule(rule);
     const re = new RegExp(
-      `#root\\.root\\s*\\{\\s*${cssVar}\\s*:\\s*([^;{}]+);\\s*\\}`,
+      `${escapeRegExp(selector)}\\s*\\{\\s*${escapeRegExp(cssVar)}\\s*:\\s*([^;{}]+);\\s*\\}`,
       "g"
     );
     const match = re.exec(css || "");
     return match ? match[1].trim() : "";
   }
 
-  function setSideberyCssRule(css, cssVar, enabled, value) {
+  function setSideberyCssRule(css, rule, enabled, value) {
+    const { selector, cssVar } = normalizeSideberyCssRule(rule);
     const re = new RegExp(
-      `#root\\.root\\s*\\{\\s*${cssVar}\\s*:\\s*[^;{}]+;\\s*\\}\\s*`,
+      `${escapeRegExp(selector)}\\s*\\{\\s*${escapeRegExp(cssVar)}\\s*:\\s*[^;{}]+;\\s*\\}\\s*`,
       "g"
     );
     const rest = String(css || "").replace(re, "").trim();
@@ -791,8 +883,8 @@
     if (!normalized || normalized.length > 100 || /[;{}\r\n]/.test(normalized)) {
       throw new Error(`Invalid Sidebery color: ${cssVar}`);
     }
-    const rule = `#root.root {${cssVar}: ${normalized};}`;
-    return rest ? `${rule}\n${rest}` : rule;
+    const declaration = `${selector} {${cssVar}: ${normalized};}`;
+    return rest ? `${declaration}\n${rest}` : declaration;
   }
 
   /** 读取并校验 ZenFox 支持的 Sidebery 外观字段。 */
@@ -812,9 +904,9 @@
         : "default",
       version: storage.extension.manifest?.version || "unknown",
     };
-    for (const [field, cssVars] of Object.entries(SIDEBERY_COLOR_RULES)) {
-      const value = cssVars
-        .map((cssVar) => getSideberyCssRule(sidebarCSS, cssVar))
+    for (const [field, cssRules] of Object.entries(SIDEBERY_COLOR_RULES)) {
+      const value = cssRules
+        .map((rule) => getSideberyCssRule(sidebarCSS, rule))
         .find(Boolean);
       result[`${field}Enabled`] = !!value;
       result[field] = value || SIDEBERY_COLOR_DEFAULTS[field];
@@ -887,11 +979,11 @@
     }
 
     let nextSidebarCSS = sidebarCSS;
-    for (const [field, cssVars] of Object.entries(SIDEBERY_COLOR_RULES)) {
-      for (const cssVar of cssVars) {
+    for (const [field, cssRules] of Object.entries(SIDEBERY_COLOR_RULES)) {
+      for (const rule of cssRules) {
         nextSidebarCSS = setSideberyCssRule(
           nextSidebarCSS,
-          cssVar,
+          rule,
           !!appearance[`${field}Enabled`],
           appearance[field]
         );
@@ -907,6 +999,380 @@
       sidebarCSS: nextSidebarCSS,
     });
     await reloadSideberySidebars();
+  }
+
+  /** 把 Firefox 主题变量解析成可写入 Sidebery 的固定 RGB 颜色。 */
+  function resolveFirefoxThemeColor(value, fallback) {
+    const text = String(value || "").trim();
+    if (!text || !win.CSS?.supports?.("color", text)) return fallback;
+    const probe = doc.createElementNS("http://www.w3.org/1999/xhtml", "span");
+    probe.style.setProperty("position", "fixed");
+    probe.style.setProperty("visibility", "hidden");
+    probe.style.setProperty("color", text);
+    root.appendChild(probe);
+    try {
+      const resolved = win.getComputedStyle(probe).color;
+      return /^rgba?\(/i.test(resolved) ? resolved : fallback;
+    } finally {
+      probe.remove();
+    }
+  }
+
+  /** 从候选颜色中选择第一个不透明背景，避免 Sidebery 露出自身底色。 */
+  function resolveFirefoxThemeBackground(values, fallback) {
+    for (const value of values) {
+      const resolved = resolveFirefoxThemeColor(value, "");
+      if (!resolved || /^transparent$/i.test(resolved)) continue;
+      const alpha = /^rgba\([^/]+[,/]\s*([\d.]+)\s*\)$/i.exec(resolved)?.[1];
+      if (alpha !== undefined && Number(alpha) <= 0.01) continue;
+      return resolved;
+    }
+    return fallback;
+  }
+
+  /** 在两个已解析基础色之间混合，供缺失的基础字段回退。 */
+  function mixFirefoxThemeColors(background, foreground, foregroundRatio) {
+    const readRgb = (value) => {
+      const channels = String(value || "").match(/[\d.]+/g)?.slice(0, 3).map(Number);
+      return channels?.length === 3 && channels.every(Number.isFinite) ? channels : null;
+    };
+    const bg = readRgb(background);
+    const fg = readRgb(foreground);
+    if (!bg || !fg) return foreground;
+    const ratio = Math.max(0, Math.min(1, Number(foregroundRatio) || 0));
+    const mixed = bg.map((channel, index) =>
+      Math.round(channel * (1 - ratio) + fg[index] * ratio)
+    );
+    return `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`;
+  }
+
+  /** 把主题清单中的数组颜色转成 CSS 颜色。 */
+  function normalizeFirefoxManifestColor(value) {
+    if (!Array.isArray(value)) return value;
+    const channels = value.map(Number);
+    if (channels.length < 3 || channels.some((channel) => !Number.isFinite(channel))) {
+      return "";
+    }
+    if (channels.length >= 4) {
+      const alpha = channels[3] > 1 ? channels[3] / 255 : channels[3];
+      return `rgba(${channels[0]}, ${channels[1]}, ${channels[2]}, ${alpha})`;
+    }
+    return `rgb(${channels[0]}, ${channels[1]}, ${channels[2]})`;
+  }
+
+  /** 读取当前主题清单，不接触 Firefox Color 的进阶字段。 */
+  function readActiveFirefoxThemeColors() {
+    try {
+      const themeId = ServicesApi?.prefs?.getStringPref("extensions.activeThemeID", "");
+      if (!themeId) return {};
+      let extension = null;
+      try {
+        if (typeof WebExtensionPolicy !== "undefined") {
+          extension = WebExtensionPolicy.getByID(themeId)?.extension || null;
+        }
+      } catch (_) {}
+      if (!extension) {
+        const { ExtensionParent } = ChromeUtils.importESModule(
+          "resource://gre/modules/ExtensionParent.sys.mjs"
+        );
+        extension = ExtensionParent.GlobalManager.getExtension(themeId);
+      }
+      return extension?.manifest?.theme?.colors || {};
+    } catch (error) {
+      log("read active Firefox theme colors", error);
+      return {};
+    }
+  }
+
+  let liveFirefoxThemeColors = {};
+
+  /** 从 Firefox 运行时主题对象提取九项基础色。 */
+  function captureLiveFirefoxThemeColors(themeData) {
+    if (!themeData || typeof themeData !== "object") return;
+    if (themeData.window && themeData.window !== win.docShell?.outerWindowID) return;
+    const theme = themeData.theme;
+    if (!theme || typeof theme !== "object") return;
+    liveFirefoxThemeColors = {
+      toolbar: theme.toolbarColor,
+      toolbar_text: theme.toolbar_text,
+      frame: theme.accentcolor,
+      tab_background_text: theme.textcolor,
+      toolbar_field: theme.toolbar_field,
+      toolbar_field_text: theme.toolbar_field_text,
+      tab_line: theme.tab_line,
+      popup: theme.popup,
+      popup_text: theme.popup_text,
+    };
+  }
+
+  /** 启动时读取 Firefox 保存的当前运行时主题对象。 */
+  function captureCurrentFirefoxThemeColors() {
+    try {
+      const { LightweightThemeManager } = ChromeUtils.importESModule(
+        "resource://gre/modules/LightweightThemeManager.sys.mjs"
+      );
+      captureLiveFirefoxThemeColors(LightweightThemeManager.themeData);
+    } catch (error) {
+      log("read current Firefox theme data", error);
+    }
+  }
+
+  /** 只读取 Firefox Color 九项基础色，并在这些基础色之间回退。 */
+  function readFirefoxThemePalette() {
+    const nav = $("nav-bar") || root;
+    const rootStyle = win.getComputedStyle(root);
+    const navStyle = win.getComputedStyle(nav);
+    const colors = readActiveFirefoxThemeColors();
+    const basic = (name) => normalizeFirefoxManifestColor(colors[name]);
+    const live = (name) => normalizeFirefoxManifestColor(liveFirefoxThemeColors[name]);
+    const toolbarBackground = resolveFirefoxThemeBackground(
+      [
+        live("toolbar"),
+        navStyle.getPropertyValue("--toolbar-bgcolor"),
+        rootStyle.getPropertyValue("--toolbar-bgcolor"),
+        basic("toolbar"),
+        rootStyle.getPropertyValue("--lwt-accent-color"),
+        basic("frame"),
+      ],
+      "rgb(26, 26, 26)"
+    );
+    const frameBackground = resolveFirefoxThemeBackground(
+      [
+        live("frame"),
+        rootStyle.getPropertyValue("--lwt-accent-color"),
+        basic("frame"),
+        toolbarBackground,
+      ],
+      toolbarBackground
+    );
+    const toolbarForeground = resolveFirefoxThemeColor(
+      live("toolbar_text") ||
+        navStyle.getPropertyValue("--toolbar-color") ||
+        rootStyle.getPropertyValue("--toolbar-color") ||
+        basic("toolbar_text") ||
+        rootStyle.getPropertyValue("--lwt-text-color") ||
+        basic("tab_background_text") ||
+        "",
+      "rgb(249, 249, 250)"
+    );
+    const tabForeground = resolveFirefoxThemeColor(
+      live("tab_background_text") ||
+        rootStyle.getPropertyValue("--lwt-text-color") ||
+        basic("tab_background_text") ||
+        toolbarForeground,
+      toolbarForeground
+    );
+    const searchBackground = resolveFirefoxThemeBackground(
+      [
+        live("toolbar_field"),
+        navStyle.getPropertyValue("--toolbar-field-background-color"),
+        rootStyle.getPropertyValue("--toolbar-field-background-color"),
+        basic("toolbar_field"),
+        toolbarBackground,
+      ],
+      toolbarBackground
+    );
+    const searchForeground = resolveFirefoxThemeColor(
+      live("toolbar_field_text") ||
+        navStyle.getPropertyValue("--toolbar-field-color") ||
+        rootStyle.getPropertyValue("--toolbar-field-color") ||
+        basic("toolbar_field_text") ||
+        toolbarForeground,
+      toolbarForeground
+    );
+    const popupBackground = resolveFirefoxThemeBackground(
+      [
+        live("popup"),
+        rootStyle.getPropertyValue("--arrowpanel-background"),
+        rootStyle.getPropertyValue("--panel-background"),
+        basic("popup"),
+        frameBackground,
+      ],
+      frameBackground
+    );
+    const popupForeground = resolveFirefoxThemeColor(
+      live("popup_text") ||
+        rootStyle.getPropertyValue("--arrowpanel-color") ||
+        rootStyle.getPropertyValue("--panel-color") ||
+        basic("popup_text") ||
+        tabForeground,
+      tabForeground
+    );
+    const declaredTabHighlight = live("tab_line") || basic("tab_line")
+      ? resolveFirefoxThemeColor(
+          live("tab_line") ||
+            rootStyle.getPropertyValue("--lwt-tab-line-color") ||
+            basic("tab_line"),
+          ""
+        )
+      : "";
+    const tabHighlight =
+      declaredTabHighlight ||
+      mixFirefoxThemeColors(frameBackground, tabForeground, 0.18);
+    return {
+      frameBackground,
+      toolbarBackground,
+      toolbarForeground,
+      tabForeground,
+      searchBackground,
+      searchForeground,
+      popupBackground,
+      popupForeground,
+      tabHighlight,
+      activeBackground: tabHighlight,
+      fingerprint: JSON.stringify({
+        frameBackground,
+        toolbarBackground,
+        toolbarForeground,
+        tabForeground,
+        searchBackground,
+        searchForeground,
+        popupBackground,
+        popupForeground,
+        tabHighlight,
+      }),
+    };
+  }
+
+  /** 把九项基础色写入 ZenFox，不再继承主题进阶图标色。 */
+  function applyZenFoxThemePalette(palette) {
+    root.style.setProperty("--uc-chrome-bg", palette.toolbarBackground, "important");
+    root.style.setProperty("--uc-chrome-fg", palette.toolbarForeground, "important");
+    root.style.setProperty("--uc-frame-bg", palette.frameBackground, "important");
+    root.style.setProperty("--uc-search-bg", palette.searchBackground, "important");
+    root.style.setProperty("--uc-search-fg", palette.searchForeground, "important");
+    root.style.setProperty("--uc-tab-highlight", palette.tabHighlight, "important");
+  }
+
+  /** 读取安装脚本生成的标记；本地覆盖脚本时按版本触发一次。 */
+  async function readZenfoxInstallToken() {
+    try {
+      const path = PathUtils.join(PathUtils.profileDir, "chrome", "zenfox-install-token");
+      const token = String(await IOUtils.readUTF8(path)).trim();
+      if (token) return token;
+    } catch (_) {}
+    return `version:${ZENFOX_VERSION}`;
+  }
+
+  let sideberyThemeSyncPromise = null;
+  let sideberyThemeSyncTimer = 0;
+  let sideberyThemeSyncQueued = false;
+
+  /** 延迟主题同步，等待 Firefox 完成主题变量重算。 */
+  function scheduleSideberyThemeSync(reason, delay = 150, attempt = 0) {
+    if (sideberyThemeSyncTimer) win.clearTimeout(sideberyThemeSyncTimer);
+    sideberyThemeSyncTimer = win.setTimeout(() => {
+      sideberyThemeSyncTimer = 0;
+      syncSideberyTheme(reason, attempt);
+    }, delay);
+  }
+
+  /**
+   * 安装标记或 Firefox 主题指纹变化时覆盖十一组 Sidebery 颜色。
+   * 同一主题期间保留用户在 ZenFox 设置页中的手动调整。
+   */
+  async function syncSideberyTheme(reason, attempt = 0) {
+    if (sideberyThemeSyncPromise) {
+      sideberyThemeSyncQueued = true;
+      return sideberyThemeSyncPromise;
+    }
+    const palette = readFirefoxThemePalette();
+    applyZenFoxThemePalette(palette);
+
+    const newestWindow = ServicesApi?.wm?.getMostRecentWindow?.("navigator:browser");
+    if (newestWindow && newestWindow !== win) return;
+
+    sideberyThemeSyncPromise = (async () => {
+      try {
+        const installToken = await readZenfoxInstallToken();
+        let previous = {};
+        try {
+          previous = JSON.parse(
+            ServicesApi?.prefs?.getStringPref(PREF_SIDEBERY_THEME_SYNC, "{}") || "{}"
+          );
+        } catch (_) {}
+        if (
+          previous.installToken === installToken &&
+          previous.fingerprint === palette.fingerprint
+        ) {
+          return;
+        }
+
+        const appearance = await readSideberyAppearance();
+        await saveSideberyAppearance({
+          ...appearance,
+          sideberyBackgroundEnabled: true,
+          sideberyBackground: palette.frameBackground,
+          toolbarBackgroundEnabled: true,
+          toolbarBackground: palette.toolbarBackground,
+          toolbarForegroundEnabled: true,
+          toolbarForeground: palette.toolbarForeground,
+          normalForegroundEnabled: true,
+          normalForeground: palette.tabForeground,
+          normalBackgroundEnabled: true,
+          normalBackground: palette.frameBackground,
+          activeForegroundEnabled: true,
+          activeForeground: palette.tabForeground,
+          activeBackgroundEnabled: true,
+          activeBackground: palette.activeBackground,
+          searchBackgroundEnabled: true,
+          searchBackground: palette.searchBackground,
+          searchForegroundEnabled: true,
+          searchForeground: palette.searchForeground,
+          popupBackgroundEnabled: true,
+          popupBackground: palette.popupBackground,
+          popupForegroundEnabled: true,
+          popupForeground: palette.popupForeground,
+        });
+        ServicesApi?.prefs?.setStringPref(
+          PREF_SIDEBERY_THEME_SYNC,
+          JSON.stringify({
+            installToken,
+            fingerprint: palette.fingerprint,
+          })
+        );
+        log("sync Sidebery theme", reason, palette);
+        if (reason !== "stabilize") scheduleSideberyThemeSync("stabilize", 600);
+      } catch (error) {
+        log("sync Sidebery theme", reason, error);
+        if (attempt < 19) scheduleSideberyThemeSync(reason, 500, attempt + 1);
+      }
+    })();
+
+    try {
+      await sideberyThemeSyncPromise;
+    } finally {
+      sideberyThemeSyncPromise = null;
+      if (sideberyThemeSyncQueued) {
+        sideberyThemeSyncQueued = false;
+        scheduleSideberyThemeSync("queued");
+      }
+    }
+  }
+
+  /** 监听 Firefox 主题与系统配色变化，并只绑定一次。 */
+  function bindSideberyThemeSync() {
+    if (win.__ucSideberyThemeSyncBound) return;
+    win.__ucSideberyThemeSyncBound = true;
+    const observer = (subject) => {
+      try {
+        captureLiveFirefoxThemeColors(subject?.wrappedJSObject);
+      } catch (_) {}
+      scheduleSideberyThemeSync("firefox-theme", 200);
+    };
+    ServicesApi?.obs?.addObserver(observer, "lightweight-theme-styling-update");
+    ServicesApi?.obs?.addObserver(observer, "look-and-feel-changed");
+    win.addEventListener(
+      "unload",
+      () => {
+        try {
+          ServicesApi?.obs?.removeObserver(observer, "lightweight-theme-styling-update");
+          ServicesApi?.obs?.removeObserver(observer, "look-and-feel-changed");
+        } catch (_) {}
+      },
+      { once: true }
+    );
+    scheduleSideberyThemeSync("startup", 400);
   }
 
   /** Materialize every enabled quick action in this window's nav-bar area. */
@@ -1409,6 +1875,14 @@
       TEXT.sideberyBackground,
       "sideberyBackground"
     );
+    const toolbarBackgroundRow = makeSideberyColorRow(
+      TEXT.toolbarBackground,
+      "toolbarBackground"
+    );
+    const toolbarForegroundRow = makeSideberyColorRow(
+      TEXT.toolbarForeground,
+      "toolbarForeground"
+    );
     const normalForegroundRow = makeSideberyColorRow(
       TEXT.normalForeground,
       "normalForeground"
@@ -1425,6 +1899,22 @@
       TEXT.activatedBackground,
       "activeBackground"
     );
+    const searchBackgroundRow = makeSideberyColorRow(
+      TEXT.searchBackground,
+      "searchBackground"
+    );
+    const searchForegroundRow = makeSideberyColorRow(
+      TEXT.searchForeground,
+      "searchForeground"
+    );
+    const popupBackgroundRow = makeSideberyColorRow(
+      TEXT.popupBackground,
+      "popupBackground"
+    );
+    const popupForegroundRow = makeSideberyColorRow(
+      TEXT.popupForeground,
+      "popupForeground"
+    );
     const sideberyStatus = createHtml("p", "uc-zenfox-sidebery-status");
     sideberyStatus.id = "uc-zenfox-sidebery-status";
     appearanceView.append(
@@ -1432,10 +1922,16 @@
       fontRow,
       densityRow,
       sideberyBackgroundRow,
+      toolbarBackgroundRow,
+      toolbarForegroundRow,
       normalForegroundRow,
       normalBackgroundRow,
       activeForegroundRow,
       activeBackgroundRow,
+      searchBackgroundRow,
+      searchForegroundRow,
+      popupBackgroundRow,
+      popupForegroundRow,
       sideberyStatus
     );
     body.append(quickView, appearanceView);
@@ -1514,6 +2010,10 @@
               density: "default",
               sideberyBackgroundEnabled: false,
               sideberyBackground: SIDEBERY_COLOR_DEFAULTS.sideberyBackground,
+              toolbarBackgroundEnabled: false,
+              toolbarBackground: SIDEBERY_COLOR_DEFAULTS.toolbarBackground,
+              toolbarForegroundEnabled: false,
+              toolbarForeground: SIDEBERY_COLOR_DEFAULTS.toolbarForeground,
               normalForegroundEnabled: false,
               normalForeground: SIDEBERY_COLOR_DEFAULTS.normalForeground,
               normalBackgroundEnabled: false,
@@ -1522,6 +2022,14 @@
               activeForeground: SIDEBERY_COLOR_DEFAULTS.activeForeground,
               activeBackgroundEnabled: false,
               activeBackground: SIDEBERY_COLOR_DEFAULTS.activeBackground,
+              searchBackgroundEnabled: false,
+              searchBackground: SIDEBERY_COLOR_DEFAULTS.searchBackground,
+              searchForegroundEnabled: false,
+              searchForeground: SIDEBERY_COLOR_DEFAULTS.searchForeground,
+              popupBackgroundEnabled: false,
+              popupBackground: SIDEBERY_COLOR_DEFAULTS.popupBackground,
+              popupForegroundEnabled: false,
+              popupForeground: SIDEBERY_COLOR_DEFAULTS.popupForeground,
             };
             renderSideberyAppearance(overlay);
             return;
@@ -1806,6 +2314,13 @@
     return /-browser-action$/i.test(node?.id || "");
   }
 
+  const FIXED_EXT_ROW_ID = "unified-extensions-button";
+
+  /** 第四行只接收扩展按钮，并固定保留 Firefox 扩展入口。 */
+  function isExtRowAction(node) {
+    return node?.id === FIXED_EXT_ROW_ID || isExtensionAction(node);
+  }
+
   const ROW1_IDS = new Set([
     "back-button",
     "forward-button",
@@ -1814,7 +2329,6 @@
     "stop-button",
     "fxa-toolbar-menu-button",
     "downloads-button",
-    "unified-extensions-button",
     "bookmarks-menu-button",
     "history-panelmenu",
     "logins-button",
@@ -1852,7 +2366,7 @@
       if (
         HIDDEN_TOOLBAR_IDS.has(id) ||
         isAiJunk(node) ||
-        !isExtensionAction(node)
+        !isExtRowAction(node)
       ) {
         setImp(node, {
           display: "none",
@@ -1893,7 +2407,7 @@
         });
         return;
       }
-      if (ROW1_IDS.has(id) || SKIP_IDS.has(id)) return;
+      if (id !== FIXED_EXT_ROW_ID && (ROW1_IDS.has(id) || SKIP_IDS.has(id))) return;
       if (id.startsWith("uc-")) return;
       if (id === "customizableui-special-spring1" || id === "customizableui-special-spring2")
         return;
@@ -1910,10 +2424,13 @@
       }
       // Row3 is an extension launcher grid, not a catch-all for Firefox's
       // dynamically added native toolbar controls.
-      if (!isExtensionAction(node)) return;
+      if (!isExtRowAction(node)) return;
       seen.add(node);
       candidates.push(node);
     };
+
+    // 原生扩展入口先入队，后续再按 CUI 顺序收集扩展按钮。
+    push(findWidgetNode(FIXED_EXT_ROW_ID));
 
     if (target) {
       for (const child of Array.from(target.children)) push(child);
@@ -1926,16 +2443,7 @@
       }
     }
 
-    // Always try these by id (may live outside the lists above)
-    for (const id of [
-      "downloads-button",
-      "unified-extensions-button",
-      "fxa-toolbar-menu-button",
-    ]) {
-      push(findWidgetNode(id));
-    }
-
-    // Move the remaining extension widgets into XUL row3 in their CUI order.
+    // 把入口和扩展按钮移入第四行。
     for (const node of candidates) {
       try {
         if (
@@ -1954,6 +2462,12 @@
       } catch (e) {
         log("fillExtRow move", node?.id, e);
       }
+    }
+
+    // 即使 Firefox 重排了原生节点，也把扩展入口恢复到首位。
+    const fixedLauncher = findWidgetNode(FIXED_EXT_ROW_ID);
+    if (fixedLauncher?.parentNode === row3 && row3.firstChild !== fixedLauncher) {
+      row3.insertBefore(fixedLauncher, row3.firstChild);
     }
 
     // Hide empty/leftover customization-target so it doesn't take a flex slot
@@ -2368,12 +2882,15 @@
     registerSettingsPageBridge();
 
     const boot = () => {
+      captureCurrentFirefoxThemeColors();
+      applyZenFoxThemePalette(readFirefoxThemePalette());
       layout("boot");
       watchSidebar();
       bindTabSync();
       ensureSideberySidebar();
+      bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.41 (simulated toolbar editor; Sidebery selected)");
+      logAlways("ready v0.5.73 (captured live Firefox theme data)");
     };
 
     if ($("nav-bar")) boot();

@@ -219,6 +219,10 @@ cp -R "$PAYLOAD/profile/chrome/utils/." "$PROFILE/chrome/utils/"
 cp -R "$PAYLOAD/profile/chrome/settings/." "$PROFILE/chrome/settings/"
 cp -p "$PAYLOAD/profile/chrome/sidebery-companion.css" "$PROFILE/chrome/sidebery-companion.css"
 
+# 标记本次安装，让 Firefox 下次启动时重新同步主题色。
+INSTALL_TOKEN="${ZENFOX_VERSION}|${STAMP}|$(date +%s)-$$-${RANDOM}"
+printf '%s\n' "$INSTALL_TOKEN" > "$PROFILE/chrome/zenfox-install-token"
+
 USER_JS="$PROFILE/user.js"
 grep -Fq 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);' "$USER_JS" 2>/dev/null || \
   printf '\n// Zenfox\nuser_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);\n' >> "$USER_JS"

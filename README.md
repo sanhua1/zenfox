@@ -66,7 +66,9 @@ The two-row layout is stored in the Firefox preference `zenfox.toolbarRows.v1` a
 
 The settings interface follows Firefox's application language: Chinese locales use Chinese, while all other locales use English.
 
-The **Appearance** tab reads and updates Sidebery's `fontSize`, `density`, and five color groups. The Sidebery background writes the same value to `--toolbar-bg` and `--frame-bg`; the other groups map to `--tabs-normal-fg`, `--tabs-normal-bg`, `--tabs-activated-fg`, and `--tabs-activated-bg`. Zenfox changes only these allowlisted values, keeps the rest of Sidebery's settings and custom CSS intact, and saves their original values before the first write.
+The **Appearance** tab reads and updates Sidebery's `fontSize`, `density`, and eleven color groups. Frame, toolbar, normal-tab, activated-tab, search, and popup colors are independently configurable. The toolbar foreground directly overrides navigation SVG fills after panel-specific inline colors; search colors are scoped to `.SearchBar`; popup colors use Sidebery's `--s-popup-bg` and `--s-popup-fg`; the activated background also drives the native scrollbar thumb through `--scroll-color`. Zenfox changes only these allowlisted rules, keeps the rest of Sidebery's settings and custom CSS intact, and saves their original values before the first write.
+
+On the first Firefox start after every installation, Zenfox maps Firefox Color's basic `frame`, `toolbar`, `tab_background_text`, `toolbar_field`, `toolbar_field_text`, `tab_line`, `popup`, and `popup_text` colors to their Sidebery counterparts. The Sidebery toolbar foreground follows Firefox's final painted toolbar foreground, with `toolbar_text` as a fallback. Normal and activated tab text both follow `tab_background_text`. Users can customize them afterward; when the Firefox theme changes, Zenfox overwrites them with the new theme colors. Transparent colors fall through to the nearest semantic background or foreground.
 
 Fresh or Firefox Sync-installed Sidebery profiles are supported even before Sidebery has persisted its default `settings` object.
 

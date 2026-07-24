@@ -27,10 +27,11 @@
   /* Follow the active Firefox/WebExtension theme, with current dark fallbacks. */
   --uc-chrome-bg: var(--toolbar-bgcolor, var(--lwt-accent-color, #1a1a1a));
   --uc-chrome-fg: var(--toolbar-color, var(--lwt-text-color, #f9f9fa));
-  --uc-chrome-border: var(
-    --chrome-content-separator-color,
-    color-mix(in srgb, var(--uc-chrome-fg) 12%, transparent)
-  );
+  --uc-frame-bg: var(--lwt-accent-color, var(--uc-chrome-bg));
+  --uc-search-bg: var(--toolbar-field-background-color, var(--uc-chrome-bg));
+  --uc-search-fg: var(--toolbar-field-color, var(--uc-chrome-fg));
+  --uc-tab-highlight: var(--lwt-tab-line-color, var(--uc-chrome-fg));
+  --uc-chrome-border: color-mix(in srgb, var(--uc-chrome-fg) 12%, transparent);
   --uc-gap: 3px;
 
   --urlbar-height: var(--uc-urlbar-height) !important;
@@ -148,7 +149,9 @@
 
   background: var(--uc-chrome-bg) !important;
   color: var(--uc-chrome-fg) !important;
-  border-right: 1px solid var(--uc-chrome-border) !important;
+  --toolbarbutton-icon-fill: var(--uc-chrome-fg) !important;
+  --toolbarbutton-icon-fill-attention: var(--uc-tab-highlight) !important;
+  border-right: 0 !important;
   border-bottom: none !important;
 
   /* 原生 urlbar 已寄放，不再需要 clip 整栏（clip 会裁掉第四行插件图标） */
@@ -463,13 +466,16 @@
  * Firefox's solid native puzzle. Its circular notch is part of the SVG path,
  * not a mask; explicitly clear inherited clipping while keeping that shape.
  */
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions, #uc-left-row3) > #unified-extensions-button,
+:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions, #uc-left-row3) > #unified-extensions-button > .toolbarbutton-icon {
   list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.svg") !important;
   clip-path: none !important;
   mask: none !important;
   border-radius: 0 !important;
   overflow: visible !important;
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: currentColor !important;
+  fill-opacity: 1 !important;
 }
 
 :root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button > .toolbarbutton-icon {
@@ -589,6 +595,102 @@
 :root:not([customizing]) #uc-left-row2 #urlbar-input,
 :root:not([customizing]) #uc-left-row2 .urlbar-input-box {
   font-size: 11px !important;
+}
+
+/*
+ * 地址栏始终使用 Firefox Color 的 Search Bar Color 与 Search Text。
+ * 不继承第三方主题提供的进阶图标颜色。
+ */
+:root:not([customizing]) #uc-left-row2 #urlbar {
+  --toolbar-field-color: var(--uc-search-fg) !important;
+  --toolbar-field-icon-color: var(--uc-search-fg) !important;
+  --toolbar-field-background-color: var(--uc-search-bg) !important;
+  --toolbar-field-border-color: color-mix(in srgb, var(--uc-search-fg) 24%, transparent) !important;
+  --urlbar-box-background-color: color-mix(in srgb, var(--uc-search-fg) 10%, transparent) !important;
+  --urlbar-box-background-color-focus: color-mix(in srgb, var(--uc-search-fg) 10%, transparent) !important;
+  --urlbar-box-background-color-hover: color-mix(in srgb, var(--uc-search-fg) 16%, transparent) !important;
+  --urlbar-box-background-color-active: color-mix(in srgb, var(--uc-search-fg) 22%, transparent) !important;
+  --urlbar-box-text-color: var(--uc-search-fg) !important;
+  --urlbar-box-text-color-hover: var(--uc-search-fg) !important;
+  --urlbar-icon-fill-opacity: 1 !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar > #urlbar-background {
+  background-color: var(--toolbar-field-background-color) !important;
+  border-color: var(--toolbar-field-border-color) !important;
+}
+
+:root:not([customizing]) #uc-left-row2 #urlbar #urlbar-input {
+  color: var(--toolbar-field-color) !important;
+}
+
+/*
+ * 普通地址栏图标继承 ZenFox 前景色。
+ * Firefox 直接写在图标上的收藏、权限和安全状态色仍保留。
+ */
+:root:not([customizing])
+  #uc-left-row2
+  #urlbar
+  :is(
+    #identity-box,
+    #tracking-protection-icon-container,
+    #notification-popup-box
+  ) {
+  color: var(--toolbar-field-icon-color) !important;
+}
+
+/*
+ * Firefox 152 在这些 SVG 上直接解析 fill。
+ * 颜色继续继承所在按钮，避免浅色按钮出现浅色图标。
+ */
+:root:not([customizing])
+  #uc-left-row2
+  #urlbar
+  :is(
+    #identity-icon,
+    #trust-icon,
+    #tracking-protection-icon,
+    #permissions-granted-icon,
+    .notification-anchor-icon,
+    #blocked-permissions-container > .blocked-permission-icon,
+    #page-action-buttons .urlbar-icon
+  ) {
+  fill: currentColor !important;
+  fill-opacity: 1 !important;
+}
+
+/* Firefox 新旧盾牌的 XUL SVG 不稳定继承父级 color，直接固定到地址栏前景。 */
+:root:not([customizing])
+  #uc-left-row2
+  #urlbar
+  :is(#trust-icon, #tracking-protection-icon) {
+  color: var(--toolbar-field-icon-color) !important;
+  fill: currentColor !important;
+  fill-opacity: 1 !important;
+}
+
+/* 只有纯图标页面操作跟随 ZenFox 前景色，缩放等带底色控件保留原生配色。 */
+:root:not([customizing])
+  #uc-left-row2
+  #urlbar
+  #page-action-buttons
+  > :not(#urlbar-zoom-button):is(.urlbar-icon, .urlbar-page-action),
+:root:not([customizing])
+  #uc-left-row2
+  #urlbar
+  #page-action-buttons
+  > :not(#urlbar-zoom-button)
+  .urlbar-icon {
+  color: var(--toolbar-field-icon-color) !important;
+}
+
+/* 已收藏状态继续使用 Firefox 主题强调色。 */
+:root:not([customizing])
+  #uc-left-row2
+  #urlbar
+  #star-button[starred] {
+  color: var(--uc-tab-highlight) !important;
+  fill: var(--uc-tab-highlight) !important;
 }
 
 /* Firefox 152 新版 HTTPS/证书按钮：与 URL 文字做 3px 视觉对齐。 */
@@ -1157,6 +1259,21 @@
   padding-top: calc(var(--uc-chrome-height) + var(--uc-sidebar-gap, 4px)) !important;
   box-sizing: border-box !important;
   background: var(--uc-chrome-bg) !important;
+}
+
+/*
+ * 原生分隔条继续负责拖拽宽度。
+ * 填满透明拖拽区，避免浅色内容背景形成贯穿窗口的白线。
+ */
+:root:not([customizing]) #sidebar-splitter {
+  background-color: var(--uc-frame-bg) !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+:root:not([customizing]) #sidebar-splitter:hover {
+  background-color: color-mix(in srgb, var(--uc-chrome-fg) 10%, var(--uc-frame-bg)) !important;
 }
 
 /*
