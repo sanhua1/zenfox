@@ -284,14 +284,16 @@ try {
 
     $running = @(Get-Process firefox -ErrorAction SilentlyContinue)
     if ($running.Count -gt 0) {
-        $answer = Read-Host 'Firefox is running. Close it gracefully and continue? [y/N]'
+        $processIds = ($running | Sort-Object Id | ForEach-Object { $_.Id }) -join ', '
+        Write-Zenfox "Firefox processes: $processIds"
+        $answer = Read-Host 'Force stop all Firefox processes and continue? Unsaved data may be lost. [y/N]'
         if ($answer -notmatch '^[Yy]$') { Stop-Zenfox 'Close Firefox and rerun Zenfox.' }
-        foreach ($process in $running) { [void]$process.CloseMainWindow() }
-        for ($i = 0; $i -lt 40; $i++) {
+        Stop-Process -Name firefox -Force -ErrorAction SilentlyContinue
+        for ($i = 0; $i -lt 20; $i++) {
             if (-not (Get-Process firefox -ErrorAction SilentlyContinue)) { break }
             Start-Sleep -Milliseconds 250
         }
-        if (Get-Process firefox -ErrorAction SilentlyContinue) { Stop-Zenfox 'Firefox did not exit. Close it manually and rerun Zenfox.' }
+        if (Get-Process firefox -ErrorAction SilentlyContinue) { Stop-Zenfox 'Firefox processes are still running. Close them manually and rerun Zenfox.' }
     }
 
     $sourceRoot = Get-SourceRoot

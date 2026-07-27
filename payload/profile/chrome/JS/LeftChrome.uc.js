@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.74 — Windows installer token hotfix
-// @version         0.5.74
+// @description     PLAN.md v0.5.75 — reliable Firefox shutdown on Windows
+// @version         0.5.75
 // @author          local
 // ==/UserScript==
 
@@ -98,6 +98,7 @@
  *   v0.5.72 maps Sidebery's actual active-element border to the tab highlight.
  *   v0.5.73 captures live Firefox Color values from the theme update event.
  *   v0.5.74 fixes install-token creation under Windows PowerShell 5.1.
+ *   v0.5.75 lets the Windows installer explicitly stop residual Firefox processes.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -115,7 +116,7 @@
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
   const PREF_SIDEBERY_THEME_SYNC = "zenfox.sideberyThemeSync.v1";
-  const ZENFOX_VERSION = "0.5.74";
+  const ZENFOX_VERSION = "0.5.75";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
@@ -2891,7 +2892,7 @@
       ensureSideberySidebar();
       bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.74 (Windows installer token hotfix)");
+      logAlways("ready v0.5.75 (reliable Firefox shutdown on Windows)");
     };
 
     if ($("nav-bar")) boot();
