@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.75 — reliable Firefox shutdown on Windows
-// @version         0.5.75
+// @description     PLAN.md v0.5.76 — fullscreen video compatibility fix
+// @version         0.5.76
 // @author          local
 // ==/UserScript==
 
@@ -99,6 +99,7 @@
  *   v0.5.73 captures live Firefox Color values from the theme update event.
  *   v0.5.74 fixes install-token creation under Windows PowerShell 5.1.
  *   v0.5.75 lets the Windows installer explicitly stop residual Firefox processes.
+ *   v0.5.76 hides toolbars and splitters in DOM and video fullscreen mode.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -116,7 +117,7 @@
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
   const PREF_SIDEBERY_THEME_SYNC = "zenfox.sideberyThemeSync.v1";
-  const ZENFOX_VERSION = "0.5.75";
+  const ZENFOX_VERSION = "0.5.76";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
@@ -470,7 +471,15 @@
    * 用前两行较大的内容宽度约束 Firefox 原生侧栏分隔条
    * 导航栏内边距计入侧边栏 border-box 最小宽度
    */
+  function isFullscreenHidden() {
+    return (
+      root.hasAttribute("inDOMFullscreen") ||
+      root.hasAttribute("fullscreenNavToolboxHidden")
+    );
+  }
+
   function updateSidebarMinWidth() {
+    if (isFullscreenHidden()) return;
     const nav = $("nav-bar");
     const sidebar = $("sidebar-box");
     const row1 = $("uc-left-row1");
@@ -491,6 +500,7 @@
   }
 
   function measureChromeHeight() {
+    if (isFullscreenHidden()) return;
     const nav = $("nav-bar");
     if (!nav) return;
     // #nav-bar is position:fixed; top:0 — its bottom edge is exactly where Sidebery should start
@@ -2862,6 +2872,7 @@
   }
 
   function layout(reason) {
+    if (isFullscreenHidden()) return;
     try {
       syncWidth();
       ensureRows();
@@ -2892,7 +2903,7 @@
       ensureSideberySidebar();
       bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.75 (reliable Firefox shutdown on Windows)");
+      logAlways("ready v0.5.76 (fullscreen video compatibility fix)");
     };
 
     if ($("nav-bar")) boot();
@@ -2917,7 +2928,19 @@
       }, ms);
     });
 
-    win.addEventListener("resize", () => measureChromeHeight());
+    win.addEventListener("resize", () => {
+      if (!isFullscreenHidden()) measureChromeHeight();
+    });
+
+    const onFullscreenChange = () => {
+      win.setTimeout(() => {
+        if (!isFullscreenHidden()) {
+          layout("fullscreenchange");
+        }
+      }, 60);
+    };
+    win.addEventListener("fullscreenchange", onFullscreenChange);
+    doc.addEventListener("fullscreenchange", onFullscreenChange);
 
     try {
       if (win.CustomizableUI?.addListener) {

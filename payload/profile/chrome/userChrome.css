@@ -1328,3 +1328,71 @@
   padding: 0 !important;
   pointer-events: none !important;
 }
+
+/* ========== 全屏/网页视频全屏兼容 ==========
+ * 当进入 DOM 全屏（网页全屏看视频）或全屏收起导航栏时，隐藏所有 Zenfox 左栏与侧栏相关元素，
+ * 避免 fixed 定位的导航栏按钮及侧栏分隔条（#sidebar-splitter）侵入全屏画面。
+ */
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #navigator-toolbox,
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #navigator-toolbox-background,
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #nav-bar {
+  display: none !important;
+  visibility: collapse !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #nav-bar * {
+  visibility: collapse !important;
+  pointer-events: none !important;
+}
+
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-box {
+  visibility: collapse !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-splitter,
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-container,
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-main,
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-launcher-splitter {
+  display: none !important;
+  visibility: collapse !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #uc-zenfox-settings-overlay {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
