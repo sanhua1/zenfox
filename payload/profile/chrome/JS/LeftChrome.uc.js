@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.76 — fullscreen video compatibility fix
-// @version         0.5.76
+// @description     PLAN.md v0.5.77 - popup and OAuth dialog compatibility fix
+// @version         0.5.77
 // @author          local
 // ==/UserScript==
 
@@ -100,6 +100,7 @@
  *   v0.5.74 fixes install-token creation under Windows PowerShell 5.1.
  *   v0.5.75 lets the Windows installer explicitly stop residual Firefox processes.
  *   v0.5.76 hides toolbars and splitters in DOM and video fullscreen mode.
+ *   v0.5.77 disables Zenfox chrome in popup and authentication windows.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -117,7 +118,7 @@
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
   const PREF_SIDEBERY_THEME_SYNC = "zenfox.sideberyThemeSync.v1";
-  const ZENFOX_VERSION = "0.5.76";
+  const ZENFOX_VERSION = "0.5.77";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
@@ -417,7 +418,21 @@
     } catch (_) {}
   }
 
+  function isPopup() {
+    if (!root) return false;
+    if (root.getAttribute("windowtype") !== "navigator:browser") return true;
+    if (win.toolbar && !win.toolbar.visible) return true;
+    if (root.hasAttribute("chromehidden")) return true;
+    return false;
+  }
+
   function isBrowser() {
+    if (isPopup()) {
+      try {
+        root.setAttribute("uc-window-popup", "true");
+      } catch (_) {}
+      return false;
+    }
     return !!( $("navigator-toolbox") || $("nav-bar") || $("main-window") );
   }
 
@@ -2903,7 +2918,7 @@
       ensureSideberySidebar();
       bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.76 (fullscreen video compatibility fix)");
+      logAlways("ready v0.5.77 (popup and OAuth dialog compatibility fix)");
     };
 
     if ($("nav-bar")) boot();

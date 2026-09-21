@@ -7,7 +7,7 @@
  */
 
 @media (-moz-platform: windows), (-moz-platform: linux) {
-  :root:not([customizing]) #uc-left-row1 > .titlebar-buttonbox-container {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > .titlebar-buttonbox-container {
     order: -1 !important;
     display: flex !important;
     align-items: center !important;
@@ -24,7 +24,7 @@
     padding: 0 !important;
   }
 
-  :root:not([customizing]) #uc-left-row1 .titlebar-buttonbox {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-buttonbox {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -40,7 +40,7 @@
     padding: 0 !important;
   }
 
-  :root:not([customizing]) #uc-left-row1 .titlebar-button {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-button {
     appearance: none !important;
     position: relative !important;
     box-sizing: border-box !important;
@@ -65,13 +65,13 @@
   }
 
   /* 隐藏平台原生符号，保留完整按钮热区。 */
-  :root:not([customizing]) #uc-left-row1 .titlebar-button > .toolbarbutton-icon {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-button > .toolbarbutton-icon {
     opacity: 0 !important;
     visibility: hidden !important;
   }
 
   /* 悬停时在圆点中央显示 macOS 风格操作符号。 */
-  :root:not([customizing]) #uc-left-row1 .titlebar-button::before {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-button::before {
     content: var(--uc-traffic-symbol, "") !important;
     position: absolute !important;
     inset: 0 !important;
@@ -86,27 +86,27 @@
     pointer-events: none !important;
   }
 
-  :root:not([customizing]) #uc-left-row1 .titlebar-button:hover::before {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-button:hover::before {
     color: rgba(40, 32, 28, 0.82) !important;
   }
 
   /* Requested left-to-right order: close, minimize, maximize/restore. */
-  :root:not([customizing]) #uc-left-row1 .titlebar-close {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-close {
     order: 1 !important;
     --uc-traffic-light: #ff5f57;
     --uc-traffic-border: #e0443e;
     --uc-traffic-symbol: "×";
   }
 
-  :root:not([customizing]) #uc-left-row1 .titlebar-min {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-min {
     order: 2 !important;
     --uc-traffic-light: #febc2e;
     --uc-traffic-border: #d89b24;
     --uc-traffic-symbol: "−";
   }
 
-  :root:not([customizing]) #uc-left-row1 .titlebar-max,
-  :root:not([customizing]) #uc-left-row1 .titlebar-restore {
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-max,
+  :root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-restore {
     order: 3 !important;
     --uc-traffic-light: #28c840;
     --uc-traffic-border: #1da734;

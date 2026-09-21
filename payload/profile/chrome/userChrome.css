@@ -34,6 +34,9 @@
   --uc-chrome-border: color-mix(in srgb, var(--uc-chrome-fg) 12%, transparent);
   --uc-gap: 3px;
 
+}
+
+:root:not([customizing], [chromehidden], [uc-window-popup]) {
   --urlbar-height: var(--uc-urlbar-height) !important;
   --urlbar-toolbar-height: var(--uc-urlbar-height) !important;
   --urlbar-container-height: var(--uc-urlbar-height) !important;
@@ -69,7 +72,7 @@
 }
 
 /* ========== 抹掉顶栏横条 ========== */
-:root:not([customizing]) #navigator-toolbox {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #navigator-toolbox {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -86,16 +89,16 @@
   z-index: 10000 !important;
 }
 
-:root:not([customizing]) #navigator-toolbox-background {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #navigator-toolbox-background {
   max-height: 0 !important;
   overflow: visible !important;
   background: transparent !important;
   border: none !important;
 }
 
-:root:not([customizing]) #TabsToolbar,
-:root:not([customizing]) #PersonalToolbar,
-:root:not([customizing]) #toolbar-menubar {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #TabsToolbar,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #PersonalToolbar,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #toolbar-menubar {
   visibility: collapse !important;
   height: 0 !important;
   min-height: 0 !important;
@@ -104,7 +107,7 @@
   overflow: hidden !important;
 }
 
-:root:not([customizing]) #titlebar {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #titlebar {
   height: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
@@ -114,8 +117,8 @@
 }
 
 .titlebar-spacer,
-:root:not([customizing]) #nav-bar toolbarspring,
-:root:not([customizing]) #vertical-spacer {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar toolbarspring,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #vertical-spacer {
   display: none !important;
   width: 0 !important;
   max-width: 0 !important;
@@ -126,7 +129,7 @@
 }
 
 /* ========== 左栏 ========== */
-:root:not([customizing]) #nav-bar {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -163,17 +166,17 @@
   z-index: 10000 !important;
 }
 
-:root:not([customizing]) #nav-bar toolbarbutton,
-:root:not([customizing]) #nav-bar toolbaritem,
-:root:not([customizing]) #nav-bar #urlbar-container,
-:root:not([customizing]) #nav-bar .titlebar-buttonbox-container {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar toolbarbutton,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar toolbaritem,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar #urlbar-container,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar .titlebar-buttonbox-container {
   -moz-window-dragging: no-drag !important;
 }
 
 /* 不再依赖原生 urlbar 展开 */
 
 /* ========== 四行宿主 ========== */
-:root:not([customizing]) #uc-left-host {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-host {
   display: flex !important;
   flex-direction: column !important;
   gap: var(--uc-gap) !important;
@@ -191,12 +194,12 @@
   display: none !important;
 }
 
-:root:not([customizing]) #uc-left-hidden-actions {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-hidden-actions {
   display: none !important;
   visibility: collapse !important;
 }
 
-:root:not([customizing]) .uc-left-row {
+:root:not([customizing], [chromehidden], [uc-window-popup]) .uc-left-row {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -210,7 +213,7 @@
 }
 
 /* 行1：必须在 url 之上 */
-:root:not([customizing]) #uc-left-row1 {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 {
   order: 1 !important;
   min-height: var(--uc-row1-height) !important;
   position: relative !important;
@@ -221,7 +224,7 @@
   gap: 0 !important;
 }
 
-:root:not([customizing]) #uc-left-row1 .titlebar-buttonbox-container {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 .titlebar-buttonbox-container {
   display: flex !important;
   visibility: visible !important;
   position: relative !important;
@@ -230,14 +233,14 @@
   margin-inline-end: 4px !important;
 }
 
-:root:not([customizing]) #uc-left-row1 #PanelUI-button,
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
-:root:not([customizing]) #uc-left-row1 #fxa-toolbar-menu-button,
-:root:not([customizing]) #uc-left-row1 #back-button,
-:root:not([customizing]) #uc-left-row1 #forward-button,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button,
-:root:not([customizing]) #uc-left-row1 #reload-button,
-:root:not([customizing]) #uc-left-row1 #stop-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #fxa-toolbar-menu-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #back-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #forward-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #reload-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-button {
   position: relative !important;
   z-index: 51 !important;
   flex-shrink: 0 !important;
@@ -252,11 +255,11 @@
  * Account and navigation controls use equal 24px slots.
  * Their icon centres therefore remain exactly equidistant.
  */
-:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button,
-:root:not([customizing]) #uc-left-row1 > #PanelUI-button,
-:root:not([customizing]) #uc-left-row1 > #back-button,
-:root:not([customizing]) #uc-left-row1 > #forward-button,
-:root:not([customizing]) #uc-left-row1 > #stop-reload-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #fxa-toolbar-menu-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #PanelUI-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #back-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #forward-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #stop-reload-button {
   box-sizing: border-box !important;
   flex: 0 0 24px !important;
   width: 24px !important;
@@ -269,14 +272,14 @@
 }
 
 /* Preserve the accepted starting anchor for the compact control group. */
-:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #fxa-toolbar-menu-button {
   margin-inline-start: 8px !important;
 }
 
 /* Firefox adds toolbar-end padding to this inner button in its native home. */
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > #reload-button,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > #stop-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > #reload-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > #stop-button {
   box-sizing: border-box !important;
   width: 100% !important;
   min-width: 0 !important;
@@ -291,12 +294,12 @@
  * 行1 的账户、菜单和导航按钮复用行2状态层：外框始终留在 24px 槽位，
  * 上下各留 1px，使实际半透明背景保持 24×24px。
  */
-:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button,
-:root:not([customizing]) #uc-left-row1 > #back-button,
-:root:not([customizing]) #uc-left-row1 > #forward-button,
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > #reload-button,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > #stop-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #fxa-toolbar-menu-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #back-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #forward-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > #reload-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > #stop-button {
   appearance: none !important;
   box-sizing: border-box !important;
   height: var(--uc-row1-height) !important;
@@ -309,33 +312,33 @@
   overflow: visible !important;
 }
 
-:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button:not([disabled]):hover,
-:root:not([customizing]) #uc-left-row1 > #back-button:not([disabled]):hover,
-:root:not([customizing]) #uc-left-row1 > #forward-button:not([disabled]):hover,
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button:not([disabled]):hover,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):not([disabled]):hover {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #fxa-toolbar-menu-button:not([disabled]):hover,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #back-button:not([disabled]):hover,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #forward-button:not([disabled]):hover,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button:not([disabled]):hover,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):not([disabled]):hover {
   background-color: var(--toolbarbutton-background-color-hover) !important;
 }
 
-:root:not([customizing]) #uc-left-row1 > #fxa-toolbar-menu-button:not([disabled]):is(:hover:active, [open], [checked]),
-:root:not([customizing]) #uc-left-row1 > #back-button:not([disabled]):is(:hover:active, [open], [checked]),
-:root:not([customizing]) #uc-left-row1 > #forward-button:not([disabled]):is(:hover:active, [open], [checked]),
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button:not([disabled]):is(:hover:active, [open], [checked]),
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):not([disabled]):is(:hover:active, [open], [checked]) {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #fxa-toolbar-menu-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #back-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > #forward-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):not([disabled]):is(:hover:active, [open], [checked]) {
   background-color: var(--toolbarbutton-background-color-active) !important;
 }
 
-:root:not([customizing]) #uc-left-row1 > :is(#fxa-toolbar-menu-button, #back-button, #forward-button):focus-visible,
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button:focus-visible,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):focus-visible {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > :is(#fxa-toolbar-menu-button, #back-button, #forward-button):focus-visible,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button:focus-visible,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button):focus-visible {
   outline: var(--focus-outline) !important;
   outline-offset: -2px !important;
 }
 
 /* 原生内部节点只保留图标和角标，避免再次绘制大尺寸状态背景。 */
-:root:not([customizing]) #uc-left-row1 > :is(#fxa-toolbar-menu-button, #back-button, #forward-button) > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button) > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > :is(#fxa-toolbar-menu-button, #back-button, #forward-button) > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button) > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 0 !important;
@@ -343,10 +346,10 @@
   outline: none !important;
 }
 
-:root:not([customizing]) #uc-left-row1 > :is(#back-button, #forward-button) > .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button > .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-row1 #PanelUI-menu-button > .toolbarbutton-badge-stack .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button) > .toolbarbutton-icon {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 > :is(#back-button, #forward-button) > .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button > .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #PanelUI-menu-button > .toolbarbutton-badge-stack .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row1 #stop-reload-button > :is(#reload-button, #stop-button) > .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: var(--uc-quick-icon) !important;
   height: var(--uc-quick-icon) !important;
@@ -359,7 +362,7 @@
 }
 
 /* 第二行与第一行共用相同按钮槽位，按钮归属由配置决定。 */
-:root:not([customizing]) #uc-left-quick-actions {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-quick-actions {
   order: 2 !important;
   min-height: var(--uc-row1-height) !important;
   height: var(--uc-row1-height) !important;
@@ -370,7 +373,7 @@
   -moz-window-dragging: drag !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem {
   box-sizing: border-box !important;
   flex: 0 0 auto !important;
   width: auto !important;
@@ -388,8 +391,8 @@
  * 所有单按钮型 CUI 控件共用外层状态背景。组合 toolbaritem 中的每个
  * 子按钮也独立占一个槽位，后续增加原生控件时无需补专属 hover 规则。
  */
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton {
   appearance: none !important;
   position: relative !important;
   box-sizing: border-box !important;
@@ -416,25 +419,25 @@
   --toolbarbutton-inner-padding: 0 !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:not([disabled]):hover,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:not([disabled]):hover {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:not([disabled]):hover,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:not([disabled]):hover {
   background-color: var(--toolbarbutton-background-color-hover) !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]),
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]) {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]),
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:not([disabled]):is(:hover:active, [open], [checked]) {
   background-color: var(--toolbarbutton-background-color-active) !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:focus-visible,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:focus-visible {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton:focus-visible,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton:focus-visible {
   outline: var(--focus-outline) !important;
   outline-offset: -2px !important;
 }
 
 /* 原生内部节点只负责图标、角标和动画，不再各自绘制状态背景。 */
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack),
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > :is(.toolbarbutton-icon, .toolbarbutton-text, .toolbarbutton-badge-stack) {
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 0 !important;
@@ -442,10 +445,10 @@
   outline: none !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > .toolbarbutton-icon,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > .toolbarbutton-icon,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > toolbaritem > toolbarbutton > .toolbarbutton-badge-stack .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: var(--uc-quick-icon) !important;
   height: var(--uc-quick-icon) !important;
@@ -457,8 +460,8 @@
   padding: 0 !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) .toolbarbutton-badge-stack,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) #downloads-indicator-anchor {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) .toolbarbutton-badge-stack,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) #downloads-indicator-anchor {
   overflow: visible !important;
 }
 
@@ -466,8 +469,8 @@
  * Firefox's solid native puzzle. Its circular notch is part of the SVG path,
  * not a mask; explicitly clear inherited clipping while keeping that shape.
  */
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions, #uc-left-row3) > #unified-extensions-button,
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions, #uc-left-row3) > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions, #uc-left-row3) > #unified-extensions-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions, #uc-left-row3) > #unified-extensions-button > .toolbarbutton-icon {
   list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.svg") !important;
   clip-path: none !important;
   mask: none !important;
@@ -478,7 +481,7 @@
   fill-opacity: 1 !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button > .toolbarbutton-icon {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > #unified-extensions-button > .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: 16px !important;
   height: 16px !important;
@@ -494,7 +497,7 @@
 }
 
 /* Sidebery 常驻时原生“显示/隐藏侧边栏”按钮冗余：不显示、不占位。 */
-:root:not([customizing]) #sidebar-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #sidebar-button {
   display: none !important;
   visibility: collapse !important;
   width: 0 !important;
@@ -506,8 +509,8 @@
 }
 
 /* 诊断时显露的 Firefox Profiler toolbar widget：不进 row3，不占位。 */
-:root:not([customizing]) #profiler-button,
-:root:not([customizing]) #profiler-button-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #profiler-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #profiler-button-button {
   display: none !important;
   visibility: collapse !important;
   width: 0 !important;
@@ -522,7 +525,7 @@
 }
 
 /* 行3：原生 #urlbar-container（证书/站点信息 + Places 联想 + 书签星） */
-:root:not([customizing]) #uc-left-row2 {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 {
   order: 3 !important;
   position: relative !important;
   z-index: 40 !important;
@@ -535,13 +538,13 @@
 }
 
 /* 旧仿地址栏：若残留则隐藏 */
-:root:not([customizing]) #uc-fake-url {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-fake-url {
   display: none !important;
 }
 
 /* —— 行内收纳：未展开时 —— */
-:root:not([customizing]) #uc-left-row2 > #urlbar-container,
-:root:not([customizing]) #nav-bar #uc-left-row2 #urlbar-container {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 > #urlbar-container,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar #uc-left-row2 #urlbar-container {
   position: relative !important;
   top: auto !important;
   left: auto !important;
@@ -566,7 +569,7 @@
   --urlbar-container-width: 100% !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar {
   position: relative !important;
   top: auto !important;
   left: auto !important;
@@ -585,15 +588,15 @@
   --urlbar-width: 100% !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar-background {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar-background {
   border-radius: 5px !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar-input,
-:root:not([customizing]) #uc-left-row2 .urlbar-input-box {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar-input,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 .urlbar-input-box {
   font-size: 11px !important;
 }
 
@@ -601,7 +604,7 @@
  * 地址栏始终使用 Firefox Color 的 Search Bar Color 与 Search Text。
  * 不继承第三方主题提供的进阶图标颜色。
  */
-:root:not([customizing]) #uc-left-row2 #urlbar {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar {
   --toolbar-field-color: var(--uc-search-fg) !important;
   --toolbar-field-icon-color: var(--uc-search-fg) !important;
   --toolbar-field-background-color: var(--uc-search-bg) !important;
@@ -615,12 +618,12 @@
   --urlbar-icon-fill-opacity: 1 !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar > #urlbar-background {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar > #urlbar-background {
   background-color: var(--toolbar-field-background-color) !important;
   border-color: var(--toolbar-field-border-color) !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar #urlbar-input {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar #urlbar-input {
   color: var(--toolbar-field-color) !important;
 }
 
@@ -628,7 +631,7 @@
  * 普通地址栏图标继承 ZenFox 前景色。
  * Firefox 直接写在图标上的收藏、权限和安全状态色仍保留。
  */
-:root:not([customizing])
+:root:not([customizing], [chromehidden], [uc-window-popup])
   #uc-left-row2
   #urlbar
   :is(
@@ -643,7 +646,7 @@
  * Firefox 152 在这些 SVG 上直接解析 fill。
  * 颜色继续继承所在按钮，避免浅色按钮出现浅色图标。
  */
-:root:not([customizing])
+:root:not([customizing], [chromehidden], [uc-window-popup])
   #uc-left-row2
   #urlbar
   :is(
@@ -660,7 +663,7 @@
 }
 
 /* Firefox 新旧盾牌的 XUL SVG 不稳定继承父级 color，直接固定到地址栏前景。 */
-:root:not([customizing])
+:root:not([customizing], [chromehidden], [uc-window-popup])
   #uc-left-row2
   #urlbar
   :is(#trust-icon, #tracking-protection-icon) {
@@ -670,12 +673,12 @@
 }
 
 /* 只有纯图标页面操作跟随 ZenFox 前景色，缩放等带底色控件保留原生配色。 */
-:root:not([customizing])
+:root:not([customizing], [chromehidden], [uc-window-popup])
   #uc-left-row2
   #urlbar
   #page-action-buttons
   > :not(#urlbar-zoom-button):is(.urlbar-icon, .urlbar-page-action),
-:root:not([customizing])
+:root:not([customizing], [chromehidden], [uc-window-popup])
   #uc-left-row2
   #urlbar
   #page-action-buttons
@@ -685,7 +688,7 @@
 }
 
 /* 已收藏状态继续使用 Firefox 主题强调色。 */
-:root:not([customizing])
+:root:not([customizing], [chromehidden], [uc-window-popup])
   #uc-left-row2
   #urlbar
   #star-button[starred] {
@@ -694,13 +697,13 @@
 }
 
 /* Firefox 152 新版 HTTPS/证书按钮：与 URL 文字做 3px 视觉对齐。 */
-:root:not([customizing]) #uc-left-row2 #trust-icon-container {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #trust-icon-container {
   position: relative !important;
   top: -3px !important;
 }
 
 /* 特殊组合控件也严格占用一个 24×26 槽位。 */
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > :is(#PanelUI-button, #stop-reload-button) {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > :is(#PanelUI-button, #stop-reload-button) {
   box-sizing: border-box !important;
   flex: 0 0 var(--uc-quick-slot) !important;
   width: var(--uc-quick-slot) !important;
@@ -713,7 +716,7 @@
   padding: 0 !important;
 }
 
-:root:not([customizing]) :is(#uc-left-row1, #uc-left-quick-actions) > #fxa-toolbar-menu-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) :is(#uc-left-row1, #uc-left-quick-actions) > #fxa-toolbar-menu-button {
   margin-inline-start: 0 !important;
 }
 
@@ -721,15 +724,15 @@
  * 扩展页面只保留 Firefox 原生拼图身份图标。
  * 隐藏扩展名称，避免窄地址栏被身份标签占满。
  */
-:root:not([customizing]) #uc-left-row2 #identity-box[pageproxystate="valid"].extensionPage {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #identity-box[pageproxystate="valid"].extensionPage {
   margin-inline-end: 2px !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #identity-box[pageproxystate="valid"].extensionPage #identity-icon-box {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #identity-box[pageproxystate="valid"].extensionPage #identity-icon-box {
   padding-inline: 4px !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #identity-box[pageproxystate="valid"].extensionPage #identity-icon-label {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #identity-box[pageproxystate="valid"].extensionPage #identity-icon-label {
   display: none !important;
 }
 
@@ -738,12 +741,12 @@
  * top layer，脱离 row2 的宽度参照。JS 用原生 blocker API 关闭该
  * breakout；[open] 仍由原生 UrlbarView 管理查询、选择与导航。
  */
-:root:not([customizing]) #uc-left-row2 {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 {
   isolation: isolate !important;
   contain: inline-size !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar[open] {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar[open] {
   display: block !important;
   position: absolute !important;
   inset: 0 auto auto 0 !important;
@@ -758,7 +761,7 @@
   --urlbar-width: 100% !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar[open] > .urlbar-input-container {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar[open] > .urlbar-input-container {
   width: 100% !important;
   height: var(--uc-urlbar-height) !important;
   min-width: 0 !important;
@@ -766,7 +769,7 @@
 }
 
 /* 覆盖 Firefox 的 `.urlbar:not([breakout]) > .urlbarView { display:none }`。 */
-:root:not([customizing]) #uc-left-row2 #urlbar[open] > .urlbarView {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar[open] > .urlbarView {
   display: block !important;
   position: relative !important;
   left: 0 !important;
@@ -779,10 +782,10 @@
   overflow-x: clip !important;
 }
 
-:root:not([customizing]) #uc-left-row2 #urlbar[open] > #urlbar-background,
-:root:not([customizing]) #uc-left-row2 .urlbarView-body-outer,
-:root:not([customizing]) #uc-left-row2 .urlbarView-body-inner,
-:root:not([customizing]) #uc-left-row2 .urlbarView-results {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 #urlbar[open] > #urlbar-background,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 .urlbarView-body-outer,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 .urlbarView-body-inner,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row2 .urlbarView-results {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
@@ -797,7 +800,7 @@
  *  - 不要强行固定 width/height 盖住 XUL 内部布局
  *  - 必须关掉 overflow，否则窄左栏会把扩展塞进 ">>" 面板
  */
-:root:not([customizing]) #nav-bar-overflow-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar-overflow-button {
   display: none !important;
   visibility: collapse !important;
   width: 0 !important;
@@ -812,12 +815,12 @@
   opacity: 0 !important;
 }
 
-:root:not([customizing]) #nav-bar {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar {
   overflow: visible !important;
 }
 
 /* 原生 CUI 目标已搬空，折叠掉，避免占位 */
-:root:not([customizing]) #nav-bar-customization-target {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar-customization-target {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
@@ -830,7 +833,7 @@
 }
 
 /* —— 扩展行（XUL hbox）—— */
-:root:not([customizing]) #uc-left-row3 {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 {
   order: 4 !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -856,8 +859,8 @@
  * 每个扩展占用相同的 32×32px 网格槽位；行宽变化时仍由 flex-wrap
  * 自动换行。不改 badge-stack 的布局模式，以保持角标和点击区对齐。
  */
-:root:not([customizing]) #uc-left-row3 > toolbarbutton,
-:root:not([customizing]) #uc-left-row3 > toolbaritem {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 > toolbarbutton,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 > toolbaritem {
   position: relative !important;
   top: auto !important;
   left: auto !important;
@@ -887,8 +890,8 @@
   --toolbarbutton-inner-padding: 0 !important;
 }
 
-:root:not([customizing]) #uc-left-row3 > toolbarbutton .toolbarbutton-icon,
-:root:not([customizing]) #uc-left-row3 > toolbaritem .toolbarbutton-icon {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 > toolbarbutton .toolbarbutton-icon,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 > toolbaritem .toolbarbutton-icon {
   box-sizing: border-box !important;
   width: 18px !important;
   height: 18px !important;
@@ -900,17 +903,17 @@
   padding: 0 !important;
 }
 
-:root:not([customizing]) #uc-left-row3 .toolbarbutton-badge-stack {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 .toolbarbutton-badge-stack {
   overflow: visible !important;
   /* 切勿 display:flex — 会让角标/图标与点击区脱节 */
 }
 
-:root:not([customizing]) #uc-left-row3 .toolbarbutton-badge {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 .toolbarbutton-badge {
   overflow: visible !important;
   z-index: 2 !important;
 }
 
-:root:not([customizing]) #uc-left-row3 > toolbarspring {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 > toolbarspring {
   display: none !important;
   width: 0 !important;
 }
@@ -1249,7 +1252,7 @@
 }
 
 /* ========== 侧栏：顶让位 = chrome 实测高度，无额外空隙 ========== */
-:root:not([customizing]) #sidebar-box {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #sidebar-box {
   /*
    * Firefox 原生 splitter 继续控制实际宽度。
    * JS 只按前两行内容计算最小值，避免按钮被拖到侧边栏外。
@@ -1265,14 +1268,14 @@
  * 原生分隔条继续负责拖拽宽度。
  * 填满透明拖拽区，避免浅色内容背景形成贯穿窗口的白线。
  */
-:root:not([customizing]) #sidebar-splitter {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #sidebar-splitter {
   background-color: var(--uc-frame-bg) !important;
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
 
-:root:not([customizing]) #sidebar-splitter:hover {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #sidebar-splitter:hover {
   background-color: color-mix(in srgb, var(--uc-chrome-fg) 10%, var(--uc-frame-bg)) !important;
 }
 
@@ -1281,8 +1284,8 @@
  * Zenfox uses the real #sidebar-box for Sidebery, so the separate launcher and
  * its splitter are redundant and must not consume a second vertical strip.
  */
-:root:not([customizing]) #sidebar-main,
-:root:not([customizing]) #sidebar-launcher-splitter {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #sidebar-main,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #sidebar-launcher-splitter {
   display: none !important;
   visibility: collapse !important;
   flex: 0 0 0 !important;
@@ -1299,22 +1302,22 @@
 }
 
 /* Firefox AI / AI Window 工具栏入口 — 不是扩展，不进第四行。 */
-:root:not([customizing]) #ai-window-toggle,
-:root:not([customizing]) #ai-window-toggle-button,
-:root:not([customizing]) #smartwindow-ask-button,
-:root:not([customizing]) #smart-window-ask-button,
-:root:not([customizing]) #nav-bar toolbarbutton[label="Ask"],
-:root:not([customizing]) #nav-bar toolbarbutton[tooltiptext*="Ask" i],
-:root:not([customizing]) #nav-bar toolbarbutton[tooltiptext*="chatbot" i],
-:root:not([customizing]) #nav-bar [id*="chatbot" i],
-:root:not([customizing]) #nav-bar [id*="genai" i],
-:root:not([customizing]) #nav-bar [id*="aichat" i],
-:root:not([customizing]) #uc-left-row3 toolbarbutton[label="Ask"],
-:root:not([customizing]) .browser-callout,
-:root:not([customizing]) .feature-callout,
-:root:not([customizing]) #selection-shortcut-action-panel,
-:root:not([customizing]) #ai-chatbot-button,
-:root:not([customizing]) #page-action-buttons #taskbar-tabs-button {
+:root:not([customizing], [chromehidden], [uc-window-popup]) #ai-window-toggle,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #ai-window-toggle-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #smartwindow-ask-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #smart-window-ask-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar toolbarbutton[label="Ask"],
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar toolbarbutton[tooltiptext*="Ask" i],
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar toolbarbutton[tooltiptext*="chatbot" i],
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar [id*="chatbot" i],
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar [id*="genai" i],
+:root:not([customizing], [chromehidden], [uc-window-popup]) #nav-bar [id*="aichat" i],
+:root:not([customizing], [chromehidden], [uc-window-popup]) #uc-left-row3 toolbarbutton[label="Ask"],
+:root:not([customizing], [chromehidden], [uc-window-popup]) .browser-callout,
+:root:not([customizing], [chromehidden], [uc-window-popup]) .feature-callout,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #selection-shortcut-action-panel,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #ai-chatbot-button,
+:root:not([customizing], [chromehidden], [uc-window-popup]) #page-action-buttons #taskbar-tabs-button {
   display: none !important;
   visibility: collapse !important;
   flex: 0 0 0 !important;
@@ -1333,9 +1336,9 @@
  * 当进入 DOM 全屏（网页全屏看视频）或全屏收起导航栏时，隐藏所有 Zenfox 左栏与侧栏相关元素，
  * 避免 fixed 定位的导航栏按钮及侧栏分隔条（#sidebar-splitter）侵入全屏画面。
  */
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #navigator-toolbox,
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #navigator-toolbox-background,
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #nav-bar {
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #navigator-toolbox,
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #navigator-toolbox-background,
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #nav-bar {
   display: none !important;
   visibility: collapse !important;
   width: 0 !important;
@@ -1352,12 +1355,12 @@
   opacity: 0 !important;
 }
 
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #nav-bar * {
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #nav-bar * {
   visibility: collapse !important;
   pointer-events: none !important;
 }
 
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-box {
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-box {
   visibility: collapse !important;
   width: 0 !important;
   min-width: 0 !important;
@@ -1372,10 +1375,10 @@
   pointer-events: none !important;
 }
 
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-splitter,
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-container,
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-main,
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-launcher-splitter {
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-splitter,
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-container,
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-main,
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #sidebar-launcher-splitter {
   display: none !important;
   visibility: collapse !important;
   width: 0 !important;
@@ -1391,8 +1394,43 @@
   pointer-events: none !important;
 }
 
-:root:not([customizing]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #uc-zenfox-settings-overlay {
+:root:not([customizing], [chromehidden], [uc-window-popup]):is([inDOMFullscreen], [fullscreenNavToolboxHidden]) #uc-zenfox-settings-overlay {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+/* ========== 弹窗/小窗口兼容 (Popup / OAuth) ==========
+ * 当窗口为弹出窗口（如 Google 登录授权、支付弹窗等）时，恢复原生布局，
+ * 避免 Zenfox 左栏、固定定位及侧边栏侵入弹窗。
+ */
+:root:is([chromehidden], [uc-window-popup]) #navigator-toolbox,
+:root:is([chromehidden], [uc-window-popup]) #navigator-toolbox-background,
+:root:is([chromehidden], [uc-window-popup]) #nav-bar {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  z-index: auto !important;
+}
+
+:root:is([chromehidden], [uc-window-popup]) #uc-left-host {
+  display: none !important;
+}
+
+:root:is([chromehidden], [uc-window-popup]) #sidebar-box,
+:root:is([chromehidden], [uc-window-popup]) #sidebar-splitter,
+:root:is([chromehidden], [uc-window-popup]) #sidebar-container,
+:root:is([chromehidden], [uc-window-popup]) #sidebar-main,
+:root:is([chromehidden], [uc-window-popup]) #sidebar-launcher-splitter {
+  display: none !important;
 }
