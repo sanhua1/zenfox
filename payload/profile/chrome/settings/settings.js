@@ -29,6 +29,8 @@ const DEFAULT_APPEARANCE = {
   activeForeground: "rgb(255,255,255)",
   activeBackgroundEnabled: false,
   activeBackground: "#f20006ff",
+  hoverBackgroundEnabled: false,
+  hoverBackground: "rgba(255,255,255,0.086)",
 };
 const FONT_SIZES = ["xxs", "xs", "s", "m", "l", "xl", "xxl"];
 const DENSITIES = ["compact", "default", "loose"];
@@ -70,6 +72,7 @@ const TEXT = IS_ZH
       loose: "宽松",
       foreground: "激活项前景色",
       background: "激活项背景色",
+      hoverBackground: "悬停背景色",
       sideberyBackground: "Sidebery 背景色",
       normalForeground: "标签前景色",
       normalBackground: "标签背景色",
@@ -109,6 +112,7 @@ const TEXT = IS_ZH
       loose: "Relaxed",
       foreground: "Activated foreground",
       background: "Activated background",
+      hoverBackground: "Hover background",
       sideberyBackground: "Sidebery background",
       normalForeground: "Tab foreground",
       normalBackground: "Tab background",
@@ -465,6 +469,7 @@ function renderAppearance() {
   renderColorRow("#normal-background-row", TEXT.normalBackground, "normalBackground");
   renderColorRow("#foreground-row", TEXT.foreground, "activeForeground");
   renderColorRow("#background-row", TEXT.background, "activeBackground");
+  renderColorRow("#hover-background-row", TEXT.hoverBackground, "hoverBackground");
 
   const status = document.querySelector("#sidebery-status");
   status.textContent = appearanceError ? TEXT.sideberyUnavailable : "";

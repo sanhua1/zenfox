@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.79 - unified accent color follows the active item background
+// @description     PLAN.md v0.5.80 - configurable hover background for Firefox and Sidebery
 // @version         0.5.77
 // @author          local
 // ==/UserScript==
@@ -103,6 +103,7 @@
  *   v0.5.77 disables Zenfox chrome in popup and authentication windows.
  *   v0.5.78 keeps an inert nav-bar overflowable so pinned extensions reach row 4.
  *   v0.5.79 overrides Firefox (Nova) accent tokens with the active item background.
+ *   v0.5.80 adds a hover background shared by Firefox menus/pages and Sidebery.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -121,7 +122,7 @@
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
   const PREF_SIDEBERY_THEME_SYNC = "zenfox.sideberyThemeSync.v1";
   const PREF_ACCENT_SHEET = "zenfox.accentSheet.v1";
-  const ZENFOX_VERSION = "0.5.79";
+  const ZENFOX_VERSION = "0.5.80";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
@@ -177,6 +178,7 @@
         normalBackground: "标签背景色",
         activatedForeground: "激活项前景色",
         activatedBackground: "激活项背景色",
+        hoverBackground: "悬停背景色",
         searchBackground: "搜索框背景色",
         searchForeground: "搜索框前景色",
         popupBackground: "弹窗背景色",
@@ -219,6 +221,7 @@
         normalBackground: "Tab background",
         activatedForeground: "Activated foreground",
         activatedBackground: "Activated background",
+        hoverBackground: "Hover background",
         searchBackground: "Search background",
         searchForeground: "Search foreground",
         popupBackground: "Popup background",
@@ -253,6 +256,8 @@
       "--frame-el-overlay-selected-border",
       "--scroll-color",
     ],
+    // 只覆盖普通项与工具栏按钮的悬停层；激活标签保留 Sidebery 原有悬停。
+    hoverBackground: ["--frame-el-overlay-hover-bg", "--toolbar-el-overlay-hover-bg"],
     searchBackground: [
       { selector: "#root.root .SearchBar", cssVar: "--toolbar-bg" },
     ],
@@ -270,6 +275,7 @@
     normalBackground: "#1a1a1a",
     activeForeground: "rgb(255,255,255)",
     activeBackground: "#f20006ff",
+    hoverBackground: "rgba(255,255,255,0.086)",
     searchBackground: "#1a1a1a",
     searchForeground: "rgb(249,249,250)",
     popupBackground: "#1a1a1a",
@@ -1310,12 +1316,19 @@
    * 只匹配 chrome:// 与特权 about: 页面，不影响普通网页；样式表进程级生效，
    * 通过 pref 记录上一次的 URI，颜色变化时先注销旧表。
    */
-  function applyZenfoxAccent(accentValue, textValue) {
+  function applyZenfoxAccent(accentValue, textValue, hoverValue) {
     const accent = resolveFirefoxThemeColor(accentValue, "");
     if (!accent) return;
     const text = resolveFirefoxThemeColor(textValue, "") || pickAccentText(accent);
+    // 悬停色：用户设置优先，否则取激活项背景色的半透明版本，替换 Nova 固定的灰紫色。
+    const customHover = resolveFirefoxThemeColor(hoverValue, "");
+    const itemHover = customHover || `color-mix(in srgb, ${accent} 45%, transparent)`;
+    const itemActive = customHover
+      ? `color-mix(in srgb, ${customHover} 80%, currentColor)`
+      : `color-mix(in srgb, ${accent} 65%, transparent)`;
     root.style.setProperty("--zenfox-accent", accent, "important");
     root.style.setProperty("--zenfox-accent-text", text, "important");
+    root.style.setProperty("--zenfox-hover", itemHover, "important");
 
     const hover = `color-mix(in srgb, ${accent} 86%, ${text})`;
     const active = `color-mix(in srgb, ${accent} 72%, ${text})`;
@@ -1336,6 +1349,15 @@
   --button-text-color-primary-active: ${text} !important;
   --focus-outline-color: ${accent} !important;
   --icon-color-information: ${accent} !important;
+  --zenfox-hover: ${itemHover} !important;
+  --button-background-color-hover: ${itemHover} !important;
+  --button-background-color-active: ${itemActive} !important;
+  --button-background-color-ghost-hover: ${itemHover} !important;
+  --button-background-color-ghost-active: ${itemActive} !important;
+  --button-background-color-menu-hover: ${itemHover} !important;
+  --button-background-color-menu-active: ${itemActive} !important;
+  --toolbarbutton-background-color-hover: ${itemHover} !important;
+  --toolbarbutton-background-color-active: ${itemActive} !important;
 }
 }
 }`;
@@ -1368,7 +1390,8 @@
     const palette = readFirefoxThemePalette();
     applyZenfoxAccent(
       appearance?.activeBackgroundEnabled ? appearance.activeBackground : palette.activeBackground,
-      appearance?.activeForegroundEnabled ? appearance.activeForeground : ""
+      appearance?.activeForegroundEnabled ? appearance.activeForeground : "",
+      appearance?.hoverBackgroundEnabled ? appearance.hoverBackground : ""
     );
   }
 
@@ -2038,6 +2061,10 @@
       TEXT.activatedBackground,
       "activeBackground"
     );
+    const hoverBackgroundRow = makeSideberyColorRow(
+      TEXT.hoverBackground,
+      "hoverBackground"
+    );
     const searchBackgroundRow = makeSideberyColorRow(
       TEXT.searchBackground,
       "searchBackground"
@@ -2067,6 +2094,7 @@
       normalBackgroundRow,
       activeForegroundRow,
       activeBackgroundRow,
+      hoverBackgroundRow,
       searchBackgroundRow,
       searchForegroundRow,
       popupBackgroundRow,
@@ -2161,6 +2189,8 @@
               activeForeground: SIDEBERY_COLOR_DEFAULTS.activeForeground,
               activeBackgroundEnabled: false,
               activeBackground: SIDEBERY_COLOR_DEFAULTS.activeBackground,
+              hoverBackgroundEnabled: false,
+              hoverBackground: SIDEBERY_COLOR_DEFAULTS.hoverBackground,
               searchBackgroundEnabled: false,
               searchBackground: SIDEBERY_COLOR_DEFAULTS.searchBackground,
               searchForegroundEnabled: false,
@@ -3031,7 +3061,7 @@
       ensureSideberySidebar();
       bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.79 (unified accent color)");
+      logAlways("ready v0.5.80 (hover background setting)");
     };
 
     if ($("nav-bar")) boot();
