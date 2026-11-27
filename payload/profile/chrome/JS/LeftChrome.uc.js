@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.77 - popup and OAuth dialog compatibility fix
+// @description     PLAN.md v0.5.78 - pinned extensions land in the extension row
 // @version         0.5.77
 // @author          local
 // ==/UserScript==
@@ -101,6 +101,7 @@
  *   v0.5.75 lets the Windows installer explicitly stop residual Firefox processes.
  *   v0.5.76 hides toolbars and splitters in DOM and video fullscreen mode.
  *   v0.5.77 disables Zenfox chrome in popup and authentication windows.
+ *   v0.5.78 keeps an inert nav-bar overflowable so pinned extensions reach row 4.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -597,6 +598,33 @@
    * and a stray ">>" chevron as a fake first row. Kill overflow permanently
    * and pull widgets back into #nav-bar-customization-target.
    */
+  /**
+   * Minimal OverflowableToolbar stand-in: never overflows, always inserts into
+   * the customization target (fillExtRow then moves extensions to row 4), and
+   * reports the extension row as the container so unpin/remove works.
+   */
+  function makeInertOverflowable() {
+    const target = () => $("nav-bar-customization-target");
+    return {
+      __ucInert: true,
+      uninit() {},
+      show() {
+        return Promise.resolve();
+      },
+      isInOverflowList() {
+        return false;
+      },
+      getContainerFor(node) {
+        const row = $("uc-left-row3");
+        if (row && node?.parentNode === row) return row;
+        return target();
+      },
+      findOverflowedInsertionPoints() {
+        return [target(), null];
+      },
+    };
+  }
+
   function disableOverflowAndRestore() {
     const nav = $("nav-bar");
     if (!nav) return;
@@ -616,9 +644,12 @@
       });
     }
 
-    // Prefer official teardown so items return from #widget-overflow-list.
-    // Only uninit once — re-running every layout() can thrash CustomizableUI.
-    if (!nav.__ucOverflowKilled) {
+    // Prefer official teardown so items return from #widget-overflow-list,
+    // then replace it with an inert shim. CustomizableUI still calls
+    // nav.overflowable.findOverflowedInsertionPoints()/getContainerFor() when
+    // an extension is pinned/unpinned; leaving it null throws and the pinned
+    // button vanishes instead of reaching the extension row.
+    if (!nav.overflowable?.__ucInert) {
       try {
         if (nav.overflowable && typeof nav.overflowable.uninit === "function") {
           nav.overflowable.uninit();
@@ -627,23 +658,11 @@
         log("overflow uninit", e);
       }
       try {
-        // Some builds keep a dead object; null it so resize cannot re-overflow
-        nav.overflowable = null;
-      } catch (_) {}
-      try {
-        delete nav.overflowable;
-      } catch (_) {}
+        nav.overflowable = makeInertOverflowable();
+      } catch (e) {
+        log("overflow shim", e);
+      }
       nav.__ucOverflowKilled = true;
-    } else if (nav.overflowable) {
-      // Something re-created overflowable — kill again
-      try {
-        if (typeof nav.overflowable.uninit === "function") {
-          nav.overflowable.uninit();
-        }
-      } catch (_) {}
-      try {
-        nav.overflowable = null;
-      } catch (_) {}
     }
 
     try {
@@ -2918,7 +2937,7 @@
       ensureSideberySidebar();
       bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.77 (popup and OAuth dialog compatibility fix)");
+      logAlways("ready v0.5.78 (pinned extension row fix)");
     };
 
     if ($("nav-bar")) boot();
