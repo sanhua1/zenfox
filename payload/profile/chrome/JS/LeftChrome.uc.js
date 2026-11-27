@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            LeftChrome
-// @description     PLAN.md v0.5.78 - pinned extensions land in the extension row
+// @description     PLAN.md v0.5.79 - unified accent color follows the active item background
 // @version         0.5.77
 // @author          local
 // ==/UserScript==
@@ -102,6 +102,7 @@
  *   v0.5.76 hides toolbars and splitters in DOM and video fullscreen mode.
  *   v0.5.77 disables Zenfox chrome in popup and authentication windows.
  *   v0.5.78 keeps an inert nav-bar overflowable so pinned extensions reach row 4.
+ *   v0.5.79 overrides Firefox (Nova) accent tokens with the active item background.
  *
  * SAFE: no style MutationObserver loops.
  */
@@ -119,7 +120,8 @@
   const PREF_SIDEBERY_APPEARANCE_BACKUP = "zenfox.sideberyAppearanceBackup.v1";
   const PREF_SIDEBERY_CSS_BACKUP = "zenfox.sideberyCssBackup.v1";
   const PREF_SIDEBERY_THEME_SYNC = "zenfox.sideberyThemeSync.v1";
-  const ZENFOX_VERSION = "0.5.77";
+  const PREF_ACCENT_SHEET = "zenfox.accentSheet.v1";
+  const ZENFOX_VERSION = "0.5.79";
   const SETTINGS_URL = "chrome://zenfox/content/settings.html";
   const ServicesApi = (() => {
     if (win.Services) return win.Services;
@@ -1044,6 +1046,7 @@
       },
       sidebarCSS: nextSidebarCSS,
     });
+    applyZenfoxAccentFromAppearance(appearance);
     await reloadSideberySidebars();
   }
 
@@ -1288,6 +1291,96 @@
     root.style.setProperty("--uc-search-bg", palette.searchBackground, "important");
     root.style.setProperty("--uc-search-fg", palette.searchForeground, "important");
     root.style.setProperty("--uc-tab-highlight", palette.tabHighlight, "important");
+  }
+
+  /** 按亮度为强调色选择可读的文字色。 */
+  function pickAccentText(background) {
+    const parts = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i.exec(background);
+    if (!parts) return "rgb(255, 255, 255)";
+    const [r, g, b] = parts.slice(1, 4).map((v) => {
+      const c = Number(v) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return luminance > 0.4 ? "rgb(21, 20, 26)" : "rgb(255, 255, 255)";
+  }
+
+  /**
+   * 用全局 USER_SHEET 把 Firefox 强调色（含 Nova 紫色）统一成 ZenFox 激活项背景色。
+   * 只匹配 chrome:// 与特权 about: 页面，不影响普通网页；样式表进程级生效，
+   * 通过 pref 记录上一次的 URI，颜色变化时先注销旧表。
+   */
+  function applyZenfoxAccent(accentValue, textValue) {
+    const accent = resolveFirefoxThemeColor(accentValue, "");
+    if (!accent) return;
+    const text = resolveFirefoxThemeColor(textValue, "") || pickAccentText(accent);
+    root.style.setProperty("--zenfox-accent", accent, "important");
+    root.style.setProperty("--zenfox-accent-text", text, "important");
+
+    const hover = `color-mix(in srgb, ${accent} 86%, ${text})`;
+    const active = `color-mix(in srgb, ${accent} 72%, ${text})`;
+    const css = `@-moz-document url-prefix("chrome:"), regexp("^about:(?!blank|srcdoc).*$") {
+@media not (forced-colors) {
+:root {
+  --zenfox-accent: ${accent} !important;
+  --zenfox-accent-text: ${text} !important;
+  --color-accent-primary: ${accent} !important;
+  --color-accent-primary-hover: ${hover} !important;
+  --color-accent-primary-active: ${active} !important;
+  --color-accent-primary-selected: ${accent} !important;
+  --button-background-color-primary: ${accent} !important;
+  --button-background-color-primary-hover: ${hover} !important;
+  --button-background-color-primary-active: ${active} !important;
+  --button-text-color-primary: ${text} !important;
+  --button-text-color-primary-hover: ${text} !important;
+  --button-text-color-primary-active: ${text} !important;
+  --focus-outline-color: ${accent} !important;
+  --icon-color-information: ${accent} !important;
+}
+}
+}`;
+    const spec = "data:text/css;charset=utf-8," + encodeURIComponent(css);
+    try {
+      const sss = (win.Cc || Components.classes)["@mozilla.org/content/style-sheet-service;1"].getService(
+        (win.Ci || Components.interfaces).nsIStyleSheetService
+      );
+      const previous = ServicesApi?.prefs?.getStringPref(PREF_ACCENT_SHEET, "") || "";
+      if (previous === spec) {
+        const uri = ServicesApi.io.newURI(spec);
+        if (sss.sheetRegistered(uri, sss.USER_SHEET)) return;
+      } else if (previous) {
+        try {
+          const oldUri = ServicesApi.io.newURI(previous);
+          if (sss.sheetRegistered(oldUri, sss.USER_SHEET)) {
+            sss.unregisterSheet(oldUri, sss.USER_SHEET);
+          }
+        } catch (_) {}
+      }
+      sss.loadAndRegisterSheet(ServicesApi.io.newURI(spec), sss.USER_SHEET);
+      ServicesApi?.prefs?.setStringPref(PREF_ACCENT_SHEET, spec);
+    } catch (error) {
+      log("apply accent sheet", error);
+    }
+  }
+
+  /** 强调色取 ZenFox 激活项背景色；未启用时回退到主题高亮色。 */
+  function applyZenfoxAccentFromAppearance(appearance) {
+    const palette = readFirefoxThemePalette();
+    applyZenfoxAccent(
+      appearance?.activeBackgroundEnabled ? appearance.activeBackground : palette.activeBackground,
+      appearance?.activeForegroundEnabled ? appearance.activeForeground : ""
+    );
+  }
+
+  async function syncZenfoxAccent(attempt = 0) {
+    let appearance = null;
+    try {
+      appearance = await readSideberyAppearance();
+    } catch (_) {
+      // Sidebery 启动较晚时先用主题色，稍后再读取用户的激活项背景色。
+      if (attempt < 5) win.setTimeout(() => syncZenfoxAccent(attempt + 1), 2000);
+    }
+    applyZenfoxAccentFromAppearance(appearance);
   }
 
   /** 读取安装脚本生成的标记；本地覆盖脚本时按版本触发一次。 */
@@ -2931,13 +3024,14 @@
     const boot = () => {
       captureCurrentFirefoxThemeColors();
       applyZenFoxThemePalette(readFirefoxThemePalette());
+      syncZenfoxAccent();
       layout("boot");
       watchSidebar();
       bindTabSync();
       ensureSideberySidebar();
       bindSideberyThemeSync();
       root.setAttribute("uc-left-chrome", "ready");
-      logAlways("ready v0.5.78 (pinned extension row fix)");
+      logAlways("ready v0.5.79 (unified accent color)");
     };
 
     if ($("nav-bar")) boot();

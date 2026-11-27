@@ -1001,7 +1001,7 @@
 }
 
 #uc-zenfox-settings-overlay .uc-zenfox-settings-tabs > button.selected {
-  border-bottom-color: AccentColor !important;
+  border-bottom-color: var(--zenfox-accent, AccentColor) !important;
   color: inherit !important;
 }
 
@@ -1058,9 +1058,9 @@
 }
 
 #uc-zenfox-settings-overlay :is(.uc-zenfox-settings-options, .uc-zenfox-color-controls) .selected {
-  border-color: color-mix(in srgb, AccentColor 72%, transparent) !important;
-  color: AccentColorText !important;
-  background: AccentColor !important;
+  border-color: color-mix(in srgb, var(--zenfox-accent, AccentColor) 72%, transparent) !important;
+  color: var(--zenfox-accent-text, AccentColorText) !important;
+  background: var(--zenfox-accent, AccentColor) !important;
 }
 
 #uc-zenfox-settings-overlay .uc-zenfox-color-controls {
@@ -1199,9 +1199,9 @@
 }
 
 #uc-zenfox-settings-overlay .uc-zenfox-settings-button.primary {
-  border-color: color-mix(in srgb, AccentColor 72%, transparent) !important;
-  color: AccentColorText !important;
-  background: AccentColor !important;
+  border-color: color-mix(in srgb, var(--zenfox-accent, AccentColor) 72%, transparent) !important;
+  color: var(--zenfox-accent-text, AccentColorText) !important;
+  background: var(--zenfox-accent, AccentColor) !important;
 }
 
 #uc-zenfox-settings-overlay .uc-zenfox-settings-close {

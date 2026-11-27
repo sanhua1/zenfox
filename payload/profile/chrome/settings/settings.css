@@ -40,9 +40,9 @@ button:disabled {
 
 button.primary,
 .segmented button.selected {
-  border-color: AccentColor;
-  color: AccentColorText;
-  background: AccentColor;
+  border-color: var(--zenfox-accent, AccentColor);
+  color: var(--zenfox-accent-text, AccentColorText);
+  background: var(--zenfox-accent, AccentColor);
 }
 
 .settings-page {
@@ -86,7 +86,7 @@ button.primary,
 }
 
 .settings-tabs button.selected {
-  border-bottom-color: AccentColor;
+  border-bottom-color: var(--zenfox-accent, AccentColor);
   color: inherit;
 }
 
@@ -170,8 +170,8 @@ button.primary,
 
 .toolbar-preview-row.drop-active,
 .action-palette.drop-active {
-  background-color: color-mix(in srgb, AccentColor 16%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 58%, transparent);
+  background-color: color-mix(in srgb, var(--zenfox-accent, AccentColor) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--zenfox-accent, AccentColor) 58%, transparent);
 }
 
 .window-controls {
@@ -279,9 +279,9 @@ button.primary,
   width: 24px;
   min-width: 24px;
   height: 26px;
-  border: 1px dashed AccentColor;
+  border: 1px dashed var(--zenfox-accent, AccentColor);
   border-radius: 4px;
-  background: color-mix(in srgb, AccentColor 18%, transparent);
+  background: color-mix(in srgb, var(--zenfox-accent, AccentColor) 18%, transparent);
 }
 
 .drag-ghost {
@@ -292,7 +292,7 @@ button.primary,
   height: 32px;
   min-height: 32px;
   margin: 0;
-  border: 1px solid color-mix(in srgb, AccentColor 72%, white);
+  border: 1px solid color-mix(in srgb, var(--zenfox-accent, AccentColor) 72%, white);
   color: var(--preview-foreground, #f9f9fa);
   background: var(--preview-background, #1a1a1a);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
@@ -440,12 +440,12 @@ body.is-dragging {
 }
 
 .color-controls .switch-control.selected {
-  border-color: AccentColor;
-  background: AccentColor;
+  border-color: var(--zenfox-accent, AccentColor);
+  background: var(--zenfox-accent, AccentColor);
 }
 
 .color-controls .switch-control.selected::after {
-  background: AccentColorText;
+  background: var(--zenfox-accent-text, AccentColorText);
   transform: translateX(22px);
 }
 
@@ -454,7 +454,7 @@ body.is-dragging {
 }
 
 .color-controls .switch-control.selected:not(:disabled):hover {
-  background: color-mix(in srgb, AccentColor 84%, currentColor);
+  background: color-mix(in srgb, var(--zenfox-accent, AccentColor) 84%, currentColor);
 }
 
 .status-text {
